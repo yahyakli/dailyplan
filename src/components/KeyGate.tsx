@@ -1,0 +1,66 @@
+'use client'
+import { useEffect, useState } from 'react'
+import { getApiKey } from '@/lib/storage'
+
+export default function KeyGate({ children }: { children: React.ReactNode }) {
+  const [hasKey, setHasKey] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    setHasKey(!!getApiKey())
+  }, [])
+
+  if (hasKey === null) return null // avoid hydration flash
+
+  if (!hasKey) {
+    return (
+      <div style={{
+        minHeight: 'calc(100vh - 56px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 24,
+      }}>
+        <div className="glass fade-up" style={{
+          maxWidth: 480, width: '100%',
+          borderRadius: 16, padding: 40, textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>🔑</div>
+          <h2 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 700, marginBottom: 12 }}>
+            Mistral API Key Required
+          </h2>
+          <p style={{ color: 'var(--muted)', lineHeight: 1.7, marginBottom: 28, fontSize: 14 }}>
+            DailyPlan uses your own free Mistral key — it never touches our servers and stays only in your browser.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <a
+              href="https://console.mistral.ai/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'block', padding: '11px 20px',
+                background: 'linear-gradient(135deg, var(--accent), #9b8af7)',
+                borderRadius: 8, color: '#fff', textDecoration: 'none',
+                fontFamily: 'Syne', fontWeight: 600, fontSize: 14,
+              }}
+            >
+              Get a free Mistral key →
+            </a>
+            <a href="/settings" style={{
+              display: 'block', padding: '11px 20px',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 8, color: 'var(--text)', textDecoration: 'none',
+              fontFamily: 'Syne', fontWeight: 600, fontSize: 14,
+            }}>
+              I have a key — go to Settings
+            </a>
+          </div>
+
+          <p style={{ color: 'var(--muted)', fontSize: 12, marginTop: 20 }}>
+            Your key never leaves your browser — stored only in localStorage.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  return <>{children}</>
+}
