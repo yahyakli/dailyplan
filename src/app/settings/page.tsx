@@ -1,8 +1,11 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { getApiKey, setApiKey, clearApiKey } from '@/lib/storage'
+import { toast } from 'sonner'
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [key, setKey] = useState('')
   const [saved, setSaved] = useState(false)
   const [hasKey, setHasKey] = useState(false)
@@ -13,11 +16,17 @@ export default function SettingsPage() {
   }, [])
 
   const handleSave = () => {
-    if (!key.trim()) return
+    if (!key.trim()) {
+      toast.error('API key cannot be empty')
+      return
+    }
     setApiKey(key.trim())
     setHasKey(true)
     setSaved(true)
-    setTimeout(() => setSaved(false), 2500)
+    toast.success('API key saved! Redirecting...')
+    setTimeout(() => {
+      router.push('/')
+    }, 1000)
   }
 
   const handleClear = () => {
@@ -47,7 +56,7 @@ export default function SettingsPage() {
               type="password"
               value={key}
               onChange={e => setKey(e.target.value)}
-              placeholder="AIza..."
+              placeholder="your-mistral-api-key"
               style={{
                 flex: 1, padding: '11px 14px',
                 background: 'var(--bg)', border: '1px solid var(--border)',

@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { getApiKey, savePlanLocally, getGuestPlanCount } from '@/lib/storage'
 import { useSession } from 'next-auth/react'
+import { toast } from 'sonner'
 import type { Plan } from '@/lib/types'
 
 interface Props {
@@ -20,8 +21,14 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
 
   const handleSubmit = async () => {
     const apiKey = getApiKey()
-    if (!apiKey) { setError('No Mistral API key found. Go to Settings.'); return }
-    if (!tasks.trim()) { setError('Please enter some tasks first.'); return }
+    if (!apiKey) {
+      toast.error('No Mistral API key found. Go to Settings to add one.')
+      return
+    }
+    if (!tasks.trim()) {
+      toast.error('Please enter some tasks first.')
+      return
+    }
 
     setError('')
     setLoading(true)
@@ -35,7 +42,18 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to generate schedule')
+      if (!res.ok) {
+        const errorMsg = data.error || 'Failed to generate schedule'
+        // Check if it's an API key error
+        if (errorMsg.includes('401') || errorMsg.includes('Invalid') || errorMsg.includes('Unauthorized')) {
+          toast.error('Invalid API key. Please check your key in Settings.')
+        } else if (errorMsg.includes('429')) {
+          toast.error('Too many requests. Please try again in a moment.')
+        } else {
+          toast.error(errorMsg)
+        }
+        throw new Error(errorMsg)
+      }
 
       const plan: Plan = data
 
@@ -51,10 +69,14 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         }).catch(console.error)
       }
 
+      toast.success('Schedule generated! 🎉')
       onPlanReady(plan)
 
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      const message = err instanceof Error ? err.message : 'Something went wrong'
+      if (!message.includes('Invalid API key') && !message.includes('Too many requests')) {
+        setError(message)
+      }
     } finally {
       setLoading(false)
       onLoading(false)

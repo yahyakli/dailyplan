@@ -14,7 +14,7 @@ export default function LeaderboardTable({ entries, currentUserId }: {
         return (
           <div
             key={entry.userId}
-            className={isMe ? '' : 'glass'}
+            className={`fade-up ${isMe ? '' : 'glass'}`}
             style={{
               display: 'flex', alignItems: 'center', gap: 14,
               padding: '12px 16px', borderRadius: 10,
@@ -23,7 +23,6 @@ export default function LeaderboardTable({ entries, currentUserId }: {
               transition: 'opacity 0.15s',
               animationDelay: `${i * 0.03}s`,
             }}
-            className={`fade-up ${isMe ? '' : 'glass'}`}
           >
             {/* Rank */}
             <div style={{ minWidth: 36, textAlign: 'center' }}>

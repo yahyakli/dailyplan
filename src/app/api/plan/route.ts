@@ -39,7 +39,16 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const error = await response.json()
-      return NextResponse.json({ error: error.message || 'Mistral API error' }, { status: response.status })
+      let message = error.message || 'Mistral API error'
+      
+      // Provide more specific error messages
+      if (response.status === 401) {
+        message = 'Invalid Mistral API key. Please check your key in Settings.'
+      } else if (response.status === 429) {
+        message = 'Rate limit exceeded. Please try again in a moment.'
+      }
+      
+      return NextResponse.json({ error: message }, { status: response.status })
     }
 
     const data = await response.json()
