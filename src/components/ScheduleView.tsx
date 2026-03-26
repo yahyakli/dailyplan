@@ -2,6 +2,7 @@
 import type { Plan } from '@/lib/types'
 import ScheduleBlock from './ScheduleBlock'
 import OverflowList from './OverflowList'
+import { useTranslations, useLanguage } from '@/lib/i18n/LanguageContext'
 
 interface Props {
   plan: Plan
@@ -9,6 +10,9 @@ interface Props {
 }
 
 export default function ScheduleView({ plan, onReset }: Props) {
+  const t = useTranslations()
+  const { locale } = useLanguage()
+
   const copyAsText = () => {
     const lines = [
       `DailyPlan — ${plan.date}`,
@@ -27,19 +31,19 @@ export default function ScheduleView({ plan, onReset }: Props) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, flexDirection: 'row' }} className="xs:flex-col sm:flex-row">
         <div>
           <p style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Your schedule
+            {t('schedule.yourSchedule')}
           </p>
           <h2 style={{ fontSize: 'clamp(18px, 5vw, 22px)', fontWeight: 700, letterSpacing: '-0.03em' }}>
-            {new Date(plan.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {new Date(plan.date + 'T12:00:00').toLocaleDateString(locale === 'ar' ? 'ar-SA' : locale === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </h2>
         </div>
         <div style={{ display: 'flex', gap: 8, width: '100%' }} className="xs:w-full sm:w-auto">
           <button onClick={copyAsText} style={{...actionBtnStyle, flex: 1}} className="sm:flex-none">
-            Copy as text
+            {t('schedule.copyAsText')}
           </button>
           {onReset && (
             <button onClick={onReset} style={{ ...actionBtnStyle, borderColor: 'var(--accent)', color: 'var(--accent)', flex: 1 }} className="sm:flex-none">
-              New plan
+              {t('schedule.newPlan')}
             </button>
           )}
         </div>
@@ -62,9 +66,9 @@ export default function ScheduleView({ plan, onReset }: Props) {
       {/* Stats strip */}
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         {[
-          { label: 'Blocks', value: plan.blocks.length },
-          { label: 'Overflow', value: plan.overflow.length },
-          { label: 'High priority', value: plan.blocks.filter(b => b.priority === 'high').length },
+          { label: t('schedule.blocks'), value: plan.blocks.length },
+          { label: t('schedule.overflow'), value: plan.overflow.length },
+          { label: t('schedule.highPriority'), value: plan.blocks.filter(b => b.priority === 'high').length },
         ].map(stat => (
           <div key={stat.label} className="glass" style={{ padding: '8px 16px', borderRadius: 8, flex: '1 1 80px', textAlign: 'center' }}>
             <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'Syne' }}>{stat.value}</div>

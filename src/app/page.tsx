@@ -4,10 +4,12 @@ import KeyGate from '@/components/KeyGate'
 import BrainDump from '@/components/BrainDump'
 import ScheduleView from '@/components/ScheduleView'
 import type { Plan } from '@/lib/types'
+import { useTranslations } from '@/lib/i18n/LanguageContext'
 
 export default function Home() {
   const [plan, setPlan] = useState<Plan | null>(null)
   const [loading, setLoading] = useState(false)
+  const t = useTranslations()
 
   return (
     <KeyGate>
@@ -16,19 +18,19 @@ export default function Home() {
         {!plan && !loading && (
           <div style={{ marginBottom: 32 }}>
             <h1 style={{ fontSize: 'clamp(28px, 7vw, 36px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 10 }}>
-              What&apos;s on your plate
+              {t('home.headline')}
               <br />
-              <span className="gradient-text">today?</span>
+              <span className="gradient-text">{t('home.headlineAccent')}</span>
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: 'clamp(14px, 2.5vw, 15px)' }}>
-              Brain-dump everything. Mistral turns it into a realistic time-blocked day.
+              {t('home.subtitle')}
             </p>
           </div>
         )}
 
         {loading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 32 }}>
-            <div style={{ fontSize: 14, color: 'var(--muted)', fontFamily: 'Syne' }}>Scheduling your day...</div>
+            <div style={{ fontSize: 14, color: 'var(--muted)', fontFamily: 'Syne' }}>{t('home.scheduling')}</div>
             {[...Array(5)].map((_, i) => (
               <div key={i} className="skeleton" style={{ height: 72, animationDelay: `${i * 0.1}s` }} />
             ))}

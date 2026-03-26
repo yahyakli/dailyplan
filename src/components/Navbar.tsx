@@ -1,14 +1,19 @@
 'use client'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Menu, X } from 'lucide-react'
+import LanguageSwitcher from './LanguageSwitcher'
+import { useLanguage, useTranslations } from '@/lib/i18n/LanguageContext'
 
 export default function Navbar() {
   const { data: session } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
   const [isDark, setIsDark] = useState(true)
+  const { isRtl } = useLanguage()
+  const t = useTranslations()
 
   useEffect(() => {
     // Check if dark mode is enabled
@@ -25,6 +30,18 @@ export default function Navbar() {
     return () => observer.disconnect()
   }, [])
 
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    if (!profileMenuOpen) return
+    const handler = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setProfileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [profileMenuOpen])
+
   const navStyle = {
     position: 'sticky' as const, 
     top: 0, 
@@ -37,6 +54,7 @@ export default function Navbar() {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
+    direction: isRtl ? 'rtl' as const : 'ltr' as const,
   }
 
   return (
@@ -51,14 +69,16 @@ export default function Navbar() {
 
       {/* Desktop Nav links */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="hidden sm:flex">
-        <NavLink href="/">Plan</NavLink>
-        <NavLink href="/history">History</NavLink>
-        {session && <NavLink href="/leaderboard">Leaderboard</NavLink>}
-        {session && <NavLink href="/profile">Profile</NavLink>}
-        <NavLink href="/settings">Settings</NavLink>
+        <NavLink href="/">{t('nav.plan')}</NavLink>
+        <NavLink href="/history">{t('nav.history')}</NavLink>
+        {session && <NavLink href="/leaderboard">{t('nav.leaderboard')}</NavLink>}
+        {session && <NavLink href="/profile">{t('nav.profile')}</NavLink>}
+        <NavLink href="/settings">{t('nav.settings')}</NavLink>
+
+        <LanguageSwitcher />
 
         {session ? (
-          <div style={{ position: 'relative', marginLeft: 8 }}>
+          <div ref={profileMenuRef} style={{ position: 'relative', marginLeft: 8 }}>
             <button
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
               style={{
@@ -104,7 +124,7 @@ export default function Navbar() {
                   onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
                   onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
                 >
-                  Sign out
+                  {t('nav.signOut')}
                 </button>
               </div>
             )}
@@ -117,7 +137,7 @@ export default function Navbar() {
             fontWeight: 600, textDecoration: 'none',
             fontFamily: 'Syne',
           }}>
-            Sign in
+            {t('nav.signIn')}
           </Link>
         )}
       </div>
@@ -146,11 +166,15 @@ export default function Navbar() {
           display: 'flex', flexDirection: 'column', gap: 4, padding: '12px',
           maxHeight: 'calc(100vh - 56px)', overflowY: 'auto',
         }}>
-          <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)}>Plan</MobileNavLink>
-          <MobileNavLink href="/history" onClick={() => setMobileMenuOpen(false)}>History</MobileNavLink>
-          {session && <MobileNavLink href="/leaderboard" onClick={() => setMobileMenuOpen(false)}>Leaderboard</MobileNavLink>}
-          {session && <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)}>Profile</MobileNavLink>}
-          <MobileNavLink href="/settings" onClick={() => setMobileMenuOpen(false)}>Settings</MobileNavLink>
+          <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)}>{t('nav.plan')}</MobileNavLink>
+          <MobileNavLink href="/history" onClick={() => setMobileMenuOpen(false)}>{t('nav.history')}</MobileNavLink>
+          {session && <MobileNavLink href="/leaderboard" onClick={() => setMobileMenuOpen(false)}>{t('nav.leaderboard')}</MobileNavLink>}
+          {session && <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)}>{t('nav.profile')}</MobileNavLink>}
+          <MobileNavLink href="/settings" onClick={() => setMobileMenuOpen(false)}>{t('nav.settings')}</MobileNavLink>
+
+          <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0 0 0', marginBottom: 8 }}>
+            <LanguageSwitcher />
+          </div>
 
           <div style={{ borderTop: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`, marginTop: 8, paddingTop: 8 }}>
             {session ? (
@@ -163,7 +187,7 @@ export default function Navbar() {
                   cursor: 'pointer', borderRadius: 6, fontSize: 13,
                 }}
               >
-                Sign out
+                {t('nav.signOut')}
               </button>
             ) : (
               <Link href="/auth/signin" style={{
@@ -173,7 +197,7 @@ export default function Navbar() {
                 fontWeight: 600, textDecoration: 'none',
                 textAlign: 'center',
               }}>
-                Sign in
+                {t('nav.signIn')}
               </Link>
             )}
           </div>

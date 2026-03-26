@@ -56,6 +56,22 @@ h1, h2, h3, h4, h5 {
   letter-spacing: -0.02em;
 }
 
+/* RTL Support for Arabic */
+html[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] body {
+  text-align: inherit;
+}
+
+html[dir="rtl"] input,
+html[dir="rtl"] textarea {
+  text-align: right;
+  direction: rtl;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: var(--surface); }

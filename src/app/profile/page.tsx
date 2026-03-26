@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import BadgeCard from '@/components/BadgeCard'
 import { BADGES } from '@/lib/scoring'
 import type { BadgeId } from '@/lib/types'
+import { useTranslations } from '@/lib/i18n/LanguageContext'
 
 interface ProfileData {
   totalPoints: number
@@ -19,13 +20,11 @@ export default function ProfilePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [data, setData] = useState<ProfileData | null>(null)
+  const t = useTranslations()
 
   useEffect(() => {
     if (status === 'unauthenticated') { router.push('/auth/signin'); return }
   }, [status, router])
-
-  // Build profile from available data
-  // (In a full app you'd have a /api/profile endpoint; for now we show what we have)
 
   if (status === 'loading') return null
 
@@ -57,10 +56,10 @@ export default function ProfilePage() {
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12, marginBottom: 36 }} className="xs:grid-cols-2 sm:grid-cols-4">
           {[
-            { emoji: '📋', label: 'Plans created', value: data?.allTimePlans ?? '—' },
-            { emoji: '🔥', label: 'Current streak', value: data?.currentStreak != null ? `${data.currentStreak} days` : '—' },
-            { emoji: '⚡', label: 'Best streak', value: data?.longestStreak != null ? `${data.longestStreak} days` : '—' },
-            { emoji: '✨', label: 'Total points', value: data?.totalPoints?.toLocaleString() ?? '—' },
+            { emoji: '📋', label: t('profile.plansCreated'), value: data?.allTimePlans ?? '—' },
+            { emoji: '🔥', label: t('profile.currentStreak'), value: data?.currentStreak != null ? `${data.currentStreak} ${t('profile.days')}` : '—' },
+            { emoji: '⚡', label: t('profile.bestStreak'), value: data?.longestStreak != null ? `${data.longestStreak} ${t('profile.days')}` : '—' },
+            { emoji: '✨', label: t('profile.totalPoints'), value: data?.totalPoints?.toLocaleString() ?? '—' },
           ].map(stat => (
             <div key={stat.label} className="glass" style={{ padding: '16px', borderRadius: 12, textAlign: 'center' }}>
               <div style={{ fontSize: 24, marginBottom: 6 }}>{stat.emoji}</div>
@@ -73,7 +72,7 @@ export default function ProfilePage() {
         {/* Badges */}
         <div>
           <h2 style={{ fontFamily: 'Syne', fontSize: 16, fontWeight: 700, marginBottom: 14 }}>
-            Badges
+            {t('profile.badges')}
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
             {(Object.keys(BADGES) as BadgeId[]).map(id => {
@@ -90,7 +89,7 @@ export default function ProfilePage() {
         </div>
 
         <p style={{ marginTop: 24, fontSize: 12, color: 'var(--muted)', textAlign: 'center' }}>
-          Create more plans to unlock badges and climb the leaderboard!
+          {t('profile.cta')}
         </p>
       </div>
     </div>

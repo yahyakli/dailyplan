@@ -4,6 +4,7 @@ import { getApiKey, savePlanLocally, getGuestPlanCount } from '@/lib/storage'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import type { Plan } from '@/lib/types'
+import { useTranslations } from '@/lib/i18n/LanguageContext'
 
 interface Props {
   onPlanReady: (plan: Plan) => void
@@ -18,15 +19,16 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const [context, setContext] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const t = useTranslations()
 
   const handleSubmit = async () => {
     const apiKey = getApiKey()
     if (!apiKey) {
-      toast.error('No Mistral API key found. Go to Settings to add one.')
+      toast.error(t('braindump.errorNoKey'))
       return
     }
     if (!tasks.trim()) {
-      toast.error('Please enter some tasks first.')
+      toast.error(t('braindump.errorNoTasks'))
       return
     }
 
@@ -44,11 +46,10 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       const data = await res.json()
       if (!res.ok) {
         const errorMsg = data.error || 'Failed to generate schedule'
-        // Check if it's an API key error
         if (errorMsg.includes('401') || errorMsg.includes('Invalid') || errorMsg.includes('Unauthorized')) {
-          toast.error('Invalid API key. Please check your key in Settings.')
+          toast.error(t('braindump.errorInvalidKey'))
         } else if (errorMsg.includes('429')) {
-          toast.error('Too many requests. Please try again in a moment.')
+          toast.error(t('braindump.errorRateLimit'))
         } else {
           toast.error(errorMsg)
         }
@@ -56,11 +57,8 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       }
 
       const plan: Plan = data
-
-      // Save locally always (guests use this as primary storage)
       savePlanLocally(plan)
 
-      // If auth user, also trigger score update
       if (session) {
         fetch('/api/score', {
           method: 'POST',
@@ -69,7 +67,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         }).catch(console.error)
       }
 
-      toast.success('Schedule generated! 🎉')
+      toast.success(t('braindump.successToast'))
       onPlanReady(plan)
 
     } catch (err: unknown) {
@@ -98,7 +96,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         }}>
           <span style={{ fontSize: 16 }}>⭐</span>
           <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>
-            You&apos;ve made {guestCount} plans! Sign up to save your history, track streaks, and join the leaderboard.
+            {t('braindump.upsell').replace('{count}', String(guestCount))}
           </span>
           <a href="/auth/signup" style={{
             padding: '6px 14px', borderRadius: 6,
@@ -106,7 +104,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
             textDecoration: 'none', fontSize: 13, fontWeight: 600,
             fontFamily: 'Syne', whiteSpace: 'nowrap',
           }}>
-            Sign up free →
+            {t('braindump.signupFree')}
           </a>
         </div>
       )}
@@ -114,12 +112,12 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       {/* Tasks textarea */}
       <div>
         <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 8, fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Brain dump — everything on your plate today
+          {t('braindump.label')}
         </label>
         <textarea
           value={tasks}
           onChange={e => setTasks(e.target.value)}
-          placeholder={`Write meeting with Jake at 2pm\nFinish the quarterly report\nReply to pending emails\nGym session\nPick up groceries\nReview pull requests...`}
+          placeholder={t('braindump.placeholder')}
           rows={9}
           style={{
             width: '100%', padding: '14px 16px',
@@ -135,15 +133,15 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
 
       {/* Time pickers */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }} className="xs:grid-cols-2 sm:grid-cols-3">
-        <TimeInput label="Start time" value={startTime} onChange={setStartTime} />
-        <TimeInput label="End time" value={endTime} onChange={setEndTime} />
+        <TimeInput label={t('braindump.startTime')} value={startTime} onChange={setStartTime} />
+        <TimeInput label={t('braindump.endTime')} value={endTime} onChange={setEndTime} />
         <div>
-          <label style={labelStyle}>Context / energy</label>
+          <label style={labelStyle}>{t('braindump.context')}</label>
           <input
             type="text"
             value={context}
             onChange={e => setContext(e.target.value)}
-            placeholder="e.g. low energy, no meetings"
+            placeholder={t('braindump.contextPlaceholder')}
             style={inputStyle}
             onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
             onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
@@ -174,7 +172,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = '0.9' }}
         onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
       >
-        {loading ? 'Generating schedule...' : 'Plan my day →'}
+        {loading ? t('braindump.generating') : t('braindump.generate')}
       </button>
     </div>
   )

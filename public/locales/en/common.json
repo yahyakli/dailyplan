@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "plan": "Plan",
+    "history": "History",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "language": "Language"
+  },
+  "auth": {
+    "signin": "Sign In",
+    "signup": "Sign Up"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "home": {
+    "headline": "What's on your plate",
+    "headlineAccent": "today?",
+    "subtitle": "Brain-dump everything. dailyplan turns it into a realistic time-blocked day.",
+    "scheduling": "Scheduling your day..."
+  },
+  "braindump": {
+    "label": "Brain dump — everything on your plate today",
+    "placeholder": "Write meeting with Jake at 2pm\nFinish the quarterly report\nReply to pending emails\nGym session\nPick up groceries\nReview pull requests...",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "context": "Context / energy",
+    "contextPlaceholder": "e.g. low energy, no meetings",
+    "generate": "Plan my day →",
+    "generating": "Generating schedule...",
+    "upsell": "You've made {count} plans! Sign up to save your history, track streaks, and join the leaderboard.",
+    "signupFree": "Sign up free →",
+    "successToast": "Schedule generated! 🎉",
+    "errorNoKey": "No Mistral API key found. Go to Settings to add one.",
+    "errorNoTasks": "Please enter some tasks first.",
+    "errorInvalidKey": "Invalid API key. Please check your key in Settings.",
+    "errorRateLimit": "Too many requests. Please try again in a moment."
+  },
+  "schedule": {
+    "yourSchedule": "Your schedule",
+    "copyAsText": "Copy as text",
+    "newPlan": "New plan",
+    "blocks": "Blocks",
+    "overflow": "Overflow",
+    "highPriority": "High priority"
+  },
+  "history": {
+    "yourPlans": "Your plans",
+    "recentLocal": "Recent (local)",
+    "title": "History",
+    "guestNotice": "Showing last 7 plans from this device.",
+    "guestSignup": "Sign up",
+    "guestSignupSuffix": "for unlimited history across devices.",
+    "empty": "No plans yet.",
+    "createFirst": "Create your first one →",
+    "backToHistory": "← Back to history",
+    "today": "Today",
+    "perfect": "✓ Perfect",
+    "blocks": "blocks",
+    "overflowLabel": "overflow",
+    "highPriorityLabel": "high priority"
+  },
+  "leaderboard": {
+    "topPlanners": "Top planners",
+    "title": "Leaderboard",
+    "subtitle": "Earn points by creating plans, maintaining streaks, and hitting perfect days.",
+    "empty": "No rankings yet. Create a plan to get on the board!"
+  },
+  "profile": {
+    "plansCreated": "Plans created",
+    "currentStreak": "Current streak",
+    "bestStreak": "Best streak",
+    "totalPoints": "Total points",
+    "days": "days",
+    "badges": "Badges",
+    "cta": "Create more plans to unlock badges and climb the leaderboard!"
+  },
+  "settings": {
+    "configuration": "Configuration",
+    "title": "Settings",
+    "subtitle": "Customize your DailyPlan experience.",
+    "apiKeyLabel": "Mistral API Key",
+    "save": "Save",
+    "saved": "✓ Saved",
+    "removeKey": "Remove key",
+    "noKey": "Don't have a key?",
+    "getKey": "Get one free at Mistral →",
+    "keyNote": "It's free, takes 2 minutes, and requires no credit card.",
+    "keyPlaceholder": "your-mistral-api-key",
+    "errorEmpty": "API key cannot be empty",
+    "successSaved": "API key saved! Redirecting..."
+  },
+  "keygate": {
+    "title": "Mistral API Key Required",
+    "description": "DailyPlan uses your own free Mistral key — it never touches our servers and stays only in your browser.",
+    "getKey": "Get a free Mistral key →",
+    "goSettings": "I have a key — go to Settings",
+    "privacy": "Your key never leaves your browser — stored only in localStorage."
+  }
+}

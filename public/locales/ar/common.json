@@ -1,0 +1,105 @@
+{
+  "nav": {
+    "plan": "الخطة",
+    "history": "السجل",
+    "leaderboard": "لوحة الترتيب",
+    "profile": "الملف الشخصي",
+    "settings": "الإعدادات",
+    "signIn": "تسجيل الدخول",
+    "signOut": "تسجيل الخروج",
+    "language": "اللغة"
+  },
+  "auth": {
+    "signin": "تسجيل الدخول",
+    "signup": "التسجيل"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجاح"
+  },
+  "home": {
+    "headline": "ما الذي لديك",
+    "headlineAccent": "اليوم؟",
+    "subtitle": "اكتب كل ما يدور في ذهنك. سيحوّله dailyplan إلى جدول يومي محكم.",
+    "scheduling": "جاري جدولة يومك..."
+  },
+  "braindump": {
+    "label": "اكتب كل شيء — كل ما لديك لتفعله اليوم",
+    "placeholder": "اجتماع مع جاك الساعة 2 مساءً\nإنهاء التقرير الفصلي\nالرد على الرسائل المعلقة\nجلسة رياضية\nالتسوق\nمراجعة طلبات الدمج...",
+    "startTime": "وقت البداية",
+    "endTime": "وقت النهاية",
+    "context": "السياق / الطاقة",
+    "contextPlaceholder": "مثال: طاقة منخفضة، لا اجتماعات",
+    "generate": "خطط ليومي →",
+    "generating": "جاري إنشاء الجدول...",
+    "upsell": "لقد أنشأت {count} خطة! سجّل لحفظ السجل وتتبع سلاسلك والانضمام إلى لوحة الترتيب.",
+    "signupFree": "سجّل مجاناً →",
+    "successToast": "تم إنشاء الجدول! 🎉",
+    "errorNoKey": "لم يُعثر على مفتاح API لـ Mistral. اذهب إلى الإعدادات لإضافته.",
+    "errorNoTasks": "يرجى إدخال بعض المهام أولاً.",
+    "errorInvalidKey": "مفتاح API غير صالح. تحقق من مفتاحك في الإعدادات.",
+    "errorRateLimit": "طلبات كثيرة جداً. يرجى المحاولة مرة أخرى بعد لحظة."
+  },
+  "schedule": {
+    "yourSchedule": "جدولك",
+    "copyAsText": "نسخ كنص",
+    "newPlan": "خطة جديدة",
+    "blocks": "كتل",
+    "overflow": "الفائض",
+    "highPriority": "أولوية عالية"
+  },
+  "history": {
+    "yourPlans": "خططك",
+    "recentLocal": "الأخيرة (محلي)",
+    "title": "السجل",
+    "guestNotice": "عرض آخر 7 خطط من هذا الجهاز.",
+    "guestSignup": "سجّل",
+    "guestSignupSuffix": "للحصول على سجل غير محدود عبر جميع أجهزتك.",
+    "empty": "لا توجد خطط بعد.",
+    "createFirst": "أنشئ أولاً →",
+    "backToHistory": "→ العودة إلى السجل",
+    "today": "اليوم",
+    "perfect": "✓ مثالي",
+    "blocks": "كتل",
+    "overflowLabel": "فائض",
+    "highPriorityLabel": "أولوية عالية"
+  },
+  "leaderboard": {
+    "topPlanners": "أفضل المخططين",
+    "title": "لوحة الترتيب",
+    "subtitle": "اكسب نقاطاً بإنشاء الخطط والحفاظ على السلاسل وتحقيق أيام مثالية.",
+    "empty": "لا ترتيب بعد. أنشئ خطة للظهور في القائمة!"
+  },
+  "profile": {
+    "plansCreated": "الخطط المُنشأة",
+    "currentStreak": "السلسلة الحالية",
+    "bestStreak": "أفضل سلسلة",
+    "totalPoints": "مجموع النقاط",
+    "days": "أيام",
+    "badges": "الشارات",
+    "cta": "أنشئ المزيد من الخطط لفتح الشارات والارتقاء في لوحة الترتيب!"
+  },
+  "settings": {
+    "configuration": "الإعداد",
+    "title": "الإعدادات",
+    "subtitle": "خصّص تجربتك مع DailyPlan.",
+    "apiKeyLabel": "مفتاح API لـ Mistral",
+    "save": "حفظ",
+    "saved": "✓ محفوظ",
+    "removeKey": "إزالة المفتاح",
+    "noKey": "ليس لديك مفتاح؟",
+    "getKey": "احصل على مفتاح مجاني من Mistral →",
+    "keyNote": "مجاني تماماً، يستغرق دقيقتين، ولا يتطلب بطاقة ائتمانية.",
+    "keyPlaceholder": "مفتاح-api-الخاص-بك",
+    "errorEmpty": "لا يمكن أن يكون مفتاح API فارغاً",
+    "successSaved": "تم حفظ مفتاح API! جاري التحويل..."
+  },
+  "keygate": {
+    "title": "مفتاح API لـ Mistral مطلوب",
+    "description": "يستخدم DailyPlan مفتاحك المجاني لـ Mistral — لا يصل إلى خوادمنا أبداً ويبقى فقط في متصفحك.",
+    "getKey": "احصل على مفتاح Mistral مجاني →",
+    "goSettings": "لدي مفتاح — الذهاب إلى الإعدادات",
+    "privacy": "مفتاحك لا يغادر متصفحك أبداً — مخزن فقط في localStorage."
+  }
+}

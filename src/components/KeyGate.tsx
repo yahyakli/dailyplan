@@ -1,9 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { getApiKey } from '@/lib/storage'
+import { useTranslations } from '@/lib/i18n/LanguageContext'
 
 export default function KeyGate({ children }: { children: React.ReactNode }) {
   const [hasKey, setHasKey] = useState<boolean | null>(null)
+  const t = useTranslations()
 
   useEffect(() => {
     setHasKey(!!getApiKey())
@@ -24,10 +26,10 @@ export default function KeyGate({ children }: { children: React.ReactNode }) {
         }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>🔑</div>
           <h2 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 700, marginBottom: 12 }}>
-            Mistral API Key Required
+            {t('keygate.title')}
           </h2>
           <p style={{ color: 'var(--muted)', lineHeight: 1.7, marginBottom: 28, fontSize: 14 }}>
-            DailyPlan uses your own free Mistral key — it never touches our servers and stays only in your browser.
+            {t('keygate.description')}
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -42,7 +44,7 @@ export default function KeyGate({ children }: { children: React.ReactNode }) {
                 fontFamily: 'Syne', fontWeight: 600, fontSize: 14,
               }}
             >
-              Get a free Mistral key →
+              {t('keygate.getKey')}
             </a>
             <a href="/settings" style={{
               display: 'block', padding: '11px 20px',
@@ -50,12 +52,12 @@ export default function KeyGate({ children }: { children: React.ReactNode }) {
               borderRadius: 8, color: 'var(--text)', textDecoration: 'none',
               fontFamily: 'Syne', fontWeight: 600, fontSize: 14,
             }}>
-              I have a key — go to Settings
+              {t('keygate.goSettings')}
             </a>
           </div>
 
           <p style={{ color: 'var(--muted)', fontSize: 12, marginTop: 20 }}>
-            Your key never leaves your browser — stored only in localStorage.
+            {t('keygate.privacy')}
           </p>
         </div>
       </div>
