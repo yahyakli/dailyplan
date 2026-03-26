@@ -98,11 +98,11 @@ export default function Navbar() {
                   style={{
                     width: '100%', padding: '8px 12px', textAlign: 'left',
                     background: 'none', border: 'none', 
-                    color: isDark ? 'var(--muted)' : '#5a5a6e',
+                    color: 'var(--muted)',
                     cursor: 'pointer', borderRadius: 6, fontSize: 13,
                   }}
                   onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = isDark ? 'var(--muted)' : '#5a5a6e')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
                 >
                   Sign out
                 </button>
@@ -159,7 +159,7 @@ export default function Navbar() {
                 style={{
                   width: '100%', padding: '8px 12px', textAlign: 'left',
                   background: 'none', border: 'none', 
-                  color: isDark ? 'var(--muted)' : '#5a5a6e',
+                  color: 'var(--muted)',
                   cursor: 'pointer', borderRadius: 6, fontSize: 13,
                 }}
               >
@@ -184,16 +184,15 @@ export default function Navbar() {
 }
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   return (
     <Link href={href} style={{
-      color: isDark ? 'var(--muted)' : '#5a5a6e', 
+      color: 'var(--muted)', 
       fontSize: 13, fontWeight: 500,
       padding: '6px 10px', borderRadius: 6, textDecoration: 'none',
       transition: 'color 0.15s',
     }}
       onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-      onMouseLeave={e => {e.currentTarget.style.color = isDark ? 'var(--muted)' : '#5a5a6e'}}
+      onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
     >
       {children}
     </Link>
@@ -201,15 +200,14 @@ function NavLink({ href, children }: { href: string; children: React.ReactNode }
 }
 
 function MobileNavLink({ href, children, onClick }: { href: string; children: React.ReactNode; onClick: () => void }) {
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   return (
     <Link href={href} onClick={onClick} style={{
-      color: isDark ? 'var(--muted)' : '#5a5a6e', fontSize: 13, fontWeight: 500,
+      color: 'var(--muted)', fontSize: 13, fontWeight: 500,
       padding: '10px 12px', borderRadius: 6, textDecoration: 'none',
       transition: 'all 0.15s', display: 'block',
     }}
       onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-      onMouseLeave={e => {e.currentTarget.style.color = isDark ? 'var(--muted)' : '#5a5a6e'}}
+      onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
     >
       {children}
     </Link>
