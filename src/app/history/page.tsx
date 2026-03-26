@@ -19,7 +19,7 @@ export default function HistoryPage() {
 
   if (selected) {
     return (
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
         <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 13, marginBottom: 24, padding: 0 }}>
           ← Back to history
         </button>
@@ -29,12 +29,12 @@ export default function HistoryPage() {
   }
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px' }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
       <div className="fade-up">
         <p style={{ fontSize: 12, fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 8 }}>
           {session ? 'Your plans' : 'Recent (local)'}
         </p>
-        <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32 }}>History</h1>
+        <h1 style={{ fontSize: 'clamp(24px, 7vw, 30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 32 }}>History</h1>
 
         {!session && (
           <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(124,106,247,0.08)', border: '1px solid rgba(124,106,247,0.2)', marginBottom: 24, fontSize: 13, color: 'var(--muted)' }}>

@@ -1,12 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
+:root,
+html:not(.dark) {
+  /* Light mode */
+  --bg:        #ffffff;
+  --surface:   #f5f5fa;
+  --border:    #d1d1e0;
+  --text:      #1a1a24;
+  --muted:     #5a5a6e;
+  --accent:    #7c6af7;
+  --accent-2:  #f7936a;
+
+  --deep-work:     #7c6af7;
+  --communication: #0fa8d8;
+  --admin:         #8888a0;
+  --personal:      #f7936a;
+  --break:         #f7be46;
+}
+
+html.dark {
+  /* Dark mode */
   --bg:        #0a0a0f;
   --surface:   #13131a;
   --border:    #1e1e2e;
@@ -51,6 +68,15 @@ h1, h2, h3, h4, h5 {
   backdrop-filter: blur(8px);
 }
 
+html.dark .glass {
+  background: rgba(255,255,255,0.03);
+}
+
+html:not(.dark) .glass {
+  background: rgba(124,106,247,0.05);
+  border: 1px solid var(--border);
+}
+
 .gradient-text {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   -webkit-background-clip: text;
@@ -59,16 +85,34 @@ h1, h2, h3, h4, h5 {
 }
 
 /* Category pills */
-.cat-deep-work    { background: rgba(124,106,247,0.15); color: #a89cf7; border-color: rgba(124,106,247,0.3); }
-.cat-communication{ background: rgba(62,207,207,0.15);  color: #6fe8e8; border-color: rgba(62,207,207,0.3); }
-.cat-admin        { background: rgba(136,136,160,0.15); color: #aaaac0; border-color: rgba(136,136,160,0.3); }
-.cat-personal     { background: rgba(247,147,106,0.15); color: #f7b38a; border-color: rgba(247,147,106,0.3); }
-.cat-break        { background: rgba(247,199,106,0.15); color: #f7d88a; border-color: rgba(247,199,106,0.3); }
+:root .cat-deep-work,
+html.dark .cat-deep-work    { background: rgba(124,106,247,0.15); color: #a89cf7; border-color: rgba(124,106,247,0.3); }
+html:not(.dark) .cat-deep-work    { background: rgba(124,106,247,0.1); color: #6c5ce7; border-color: rgba(124,106,247,0.2); }
+
+:root .cat-communication,
+html.dark .cat-communication{ background: rgba(62,207,207,0.15);  color: #6fe8e8; border-color: rgba(62,207,207,0.3); }
+html:not(.dark) .cat-communication{ background: rgba(15,168,216,0.1); color: #0682a8; border-color: rgba(15,168,216,0.2); }
+
+:root .cat-admin,
+html.dark .cat-admin        { background: rgba(136,136,160,0.15); color: #aaaac0; border-color: rgba(136,136,160,0.3); }
+html:not(.dark) .cat-admin        { background: rgba(136,136,160,0.1); color: #6b6b80; border-color: rgba(136,136,160,0.2); }
+
+:root .cat-personal,
+html.dark .cat-personal     { background: rgba(247,147,106,0.15); color: #f7b38a; border-color: rgba(247,147,106,0.3); }
+html:not(.dark) .cat-personal     { background: rgba(247,147,106,0.1); color: #d85e2a; border-color: rgba(247,147,106,0.2); }
+
+:root .cat-break,
+html.dark .cat-break        { background: rgba(247,199,106,0.15); color: #f7d88a; border-color: rgba(247,199,106,0.3); }
+html:not(.dark) .cat-break        { background: rgba(247,190,70,0.1); color: #d68a0a; border-color: rgba(247,190,70,0.2); }
 
 /* Priority dots */
 .priority-high   { background: #f75c6a; }
-.priority-medium { background: #f7c76a; }
-.priority-low    { background: #6b6b80; }
+.priority-medium { background: #f7be46; }
+.priority-low    { background: #9b9baf; }
+
+/* Light mode specific adjustments for priority */
+html:not(.dark) .priority-medium { background: #f7be46; }
+html:not(.dark) .priority-low    { background: #b8b8c8; }
 
 /* Animations */
 @keyframes fadeUp {
@@ -168,14 +212,5 @@ h1, h2, h3, h4, h5 {
     --sidebar-accent-foreground:        oklch(0.985 0 0);
     --sidebar-border:        oklch(1 0 0 / 10%);
     --sidebar-ring:        oklch(0.556 0 0);
-  }
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
   }
 }

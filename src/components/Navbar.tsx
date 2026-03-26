@@ -1,34 +1,56 @@
 'use client'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Menu, X } from 'lucide-react'
 
 export default function Navbar() {
   const { data: session } = useSession()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+  const [isDark, setIsDark] = useState(true)
+
+  useEffect(() => {
+    // Check if dark mode is enabled
+    const darkModeActive = document.documentElement.classList.contains('dark')
+    setIsDark(darkModeActive)
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(() => {
+      const darkModeActive = document.documentElement.classList.contains('dark')
+      setIsDark(darkModeActive)
+    })
+    
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+
+  const navStyle = {
+    position: 'sticky' as const, 
+    top: 0, 
+    zIndex: 50,
+    borderBottom: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`,
+    background: isDark ? 'rgba(10,10,15,0.85)' : 'rgba(255,255,255,0.75)',
+    backdropFilter: 'blur(12px)',
+    padding: '0 clamp(16px, 4vw, 24px)',
+    height: '56px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  }
 
   return (
-    <nav style={{
-      position: 'sticky', top: 0, zIndex: 50,
-      borderBottom: '1px solid var(--border)',
-      background: 'rgba(10,10,15,0.85)',
-      backdropFilter: 'blur(12px)',
-      padding: '0 24px',
-      height: '56px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    }}>
+    <nav style={navStyle}>
       {/* Logo */}
-      <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 20, fontFamily: 'Syne', fontWeight: 800, letterSpacing: '-0.03em' }}>
+      <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        <span style={{ fontSize: 'clamp(16px, 4vw, 20px)', fontFamily: 'Syne', fontWeight: 800, letterSpacing: '-0.03em' }}>
           <span className="gradient-text">daily</span>
           <span style={{ color: 'var(--text)' }}>plan</span>
         </span>
       </Link>
 
-      {/* Nav links */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      {/* Desktop Nav links */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="hidden sm:flex">
         <NavLink href="/">Plan</NavLink>
         <NavLink href="/history">History</NavLink>
         {session && <NavLink href="/leaderboard">Leaderboard</NavLink>}
@@ -38,10 +60,11 @@ export default function Navbar() {
         {session ? (
           <div style={{ position: 'relative', marginLeft: 8 }}>
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => setProfileMenuOpen(!profileMenuOpen)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
-                background: 'var(--surface)', border: '1px solid var(--border)',
+                background: isDark ? 'var(--surface)' : '#efefff',
+                border: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`,
                 borderRadius: 24, padding: '4px 12px 4px 6px',
                 cursor: 'pointer', color: 'var(--text)',
               }}
@@ -63,21 +86,23 @@ export default function Navbar() {
               </span>
             </button>
 
-            {menuOpen && (
+            {profileMenuOpen && (
               <div style={{
                 position: 'absolute', right: 0, top: 'calc(100% + 8px)',
-                background: 'var(--surface)', border: '1px solid var(--border)',
+                background: isDark ? 'var(--surface)' : '#f5f5fa',
+                border: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`,
                 borderRadius: 10, padding: 4, minWidth: 140, zIndex: 100,
               }}>
                 <button
-                  onClick={() => { signOut({ callbackUrl: '/' }); setMenuOpen(false) }}
+                  onClick={() => { signOut({ callbackUrl: '/' }); setProfileMenuOpen(false) }}
                   style={{
                     width: '100%', padding: '8px 12px', textAlign: 'left',
-                    background: 'none', border: 'none', color: 'var(--muted)',
+                    background: 'none', border: 'none', 
+                    color: isDark ? 'var(--muted)' : '#5a5a6e',
                     cursor: 'pointer', borderRadius: 6, fontSize: 13,
                   }}
                   onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = isDark ? 'var(--muted)' : '#5a5a6e')}
                 >
                   Sign out
                 </button>
@@ -96,19 +121,95 @@ export default function Navbar() {
           </Link>
         )}
       </div>
+
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        style={{
+          display: 'none',
+          background: isDark ? 'var(--surface)' : '#efefff',
+          border: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`,
+          borderRadius: 6, padding: 6,
+          cursor: 'pointer', color: 'var(--text)',
+        }}
+        className="sm:hidden flex"
+      >
+        {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && (
+        <div style={{
+          position: 'absolute', top: '56px', left: 0, right: 0,
+          background: isDark ? 'var(--surface)' : '#f5f5fa',
+          borderBottom: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`,
+          display: 'flex', flexDirection: 'column', gap: 4, padding: '12px',
+          maxHeight: 'calc(100vh - 56px)', overflowY: 'auto',
+        }}>
+          <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)}>Plan</MobileNavLink>
+          <MobileNavLink href="/history" onClick={() => setMobileMenuOpen(false)}>History</MobileNavLink>
+          {session && <MobileNavLink href="/leaderboard" onClick={() => setMobileMenuOpen(false)}>Leaderboard</MobileNavLink>}
+          {session && <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)}>Profile</MobileNavLink>}
+          <MobileNavLink href="/settings" onClick={() => setMobileMenuOpen(false)}>Settings</MobileNavLink>
+
+          <div style={{ borderTop: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`, marginTop: 8, paddingTop: 8 }}>
+            {session ? (
+              <button
+                onClick={() => { signOut({ callbackUrl: '/' }); setMobileMenuOpen(false) }}
+                style={{
+                  width: '100%', padding: '8px 12px', textAlign: 'left',
+                  background: 'none', border: 'none', 
+                  color: isDark ? 'var(--muted)' : '#5a5a6e',
+                  cursor: 'pointer', borderRadius: 6, fontSize: 13,
+                }}
+              >
+                Sign out
+              </button>
+            ) : (
+              <Link href="/auth/signin" style={{
+                display: 'block', padding: '8px 12px',
+                background: 'linear-gradient(135deg, var(--accent), #9b8af7)',
+                borderRadius: 6, color: '#fff', fontSize: 13,
+                fontWeight: 600, textDecoration: 'none',
+                textAlign: 'center',
+              }}>
+                Sign in
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
   return (
     <Link href={href} style={{
-      color: 'var(--muted)', fontSize: 13, fontWeight: 500,
+      color: isDark ? 'var(--muted)' : '#5a5a6e', 
+      fontSize: 13, fontWeight: 500,
       padding: '6px 10px', borderRadius: 6, textDecoration: 'none',
       transition: 'color 0.15s',
     }}
       onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-      onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+      onMouseLeave={e => {e.currentTarget.style.color = isDark ? 'var(--muted)' : '#5a5a6e'}}
+    >
+      {children}
+    </Link>
+  )
+}
+
+function MobileNavLink({ href, children, onClick }: { href: string; children: React.ReactNode; onClick: () => void }) {
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  return (
+    <Link href={href} onClick={onClick} style={{
+      color: isDark ? 'var(--muted)' : '#5a5a6e', fontSize: 13, fontWeight: 500,
+      padding: '10px 12px', borderRadius: 6, textDecoration: 'none',
+      transition: 'all 0.15s', display: 'block',
+    }}
+      onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+      onMouseLeave={e => {e.currentTarget.style.color = isDark ? 'var(--muted)' : '#5a5a6e'}}
     >
       {children}
     </Link>

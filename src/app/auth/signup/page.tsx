@@ -34,12 +34,12 @@ export default function SignUpPage() {
   const handleGoogle = () => signIn('google', { callbackUrl: '/' })
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div className="glass fade-up" style={{ maxWidth: 420, width: '100%', borderRadius: 16, padding: 40 }}>
-        <h1 style={{ fontFamily: 'Syne', fontSize: 26, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>
+    <div style={{ minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(16px, 4vw, 24px)' }}>
+      <div className="glass fade-up" style={{ maxWidth: 420, width: '100%', borderRadius: 16, padding: 'clamp(24px, 5vw, 40px)' }}>
+        <h1 style={{ fontFamily: 'Syne', fontSize: 'clamp(22px, 6vw, 26px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>
           Create account
         </h1>
-        <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 28 }}>
+        <p style={{ color: 'var(--muted)', fontSize: 'clamp(13px, 2vw, 14px)', marginBottom: 28 }}>
           Join the leaderboard and track your planning streaks.
         </p>
 

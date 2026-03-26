@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { getApiKey, setApiKey, clearApiKey } from '@/lib/storage'
 import { toast } from 'sonner'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -36,22 +37,28 @@ export default function SettingsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 24px' }}>
+    <div style={{ maxWidth: 560, margin: '0 auto', padding: 'clamp(24px, 5vw, 48px)' }} className="px-4 sm:px-6">
       <div className="fade-up">
-        <p style={{ fontSize: 12, fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 8 }}>
+        <p style={{ fontSize: 'clamp(11px, 2vw, 12px)', fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 8 }}>
           Configuration
         </p>
-        <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>Settings</h1>
-        <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 36 }}>
-          Your Mistral API key is stored only in your browser — never sent to our servers.
+        <h1 style={{ fontSize: 'clamp(24px, 7vw, 32px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>Settings</h1>
+        <p style={{ color: 'var(--muted)', fontSize: 'clamp(13px, 2.5vw, 15px)', marginBottom: 32 }}>
+          Customize your DailyPlan experience.
         </p>
 
-        <div className="glass" style={{ borderRadius: 14, padding: 28 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: 10 }}>
+        {/* Theme Section */}
+        <div className="glass" style={{ borderRadius: 14, padding: 'clamp(20px, 4vw, 28px)', marginBottom: 24 }}>
+          <ThemeToggle />
+        </div>
+
+        {/* API Key Section */}
+        <div className="glass" style={{ borderRadius: 14, padding: 'clamp(20px, 4vw, 28px)' }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: 12 }}>
             Mistral API Key
           </label>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexDirection: 'row' }} className="xs:flex-col sm:flex-row">
             <input
               type="password"
               value={key}
@@ -63,6 +70,7 @@ export default function SettingsPage() {
                 borderRadius: 8, color: 'var(--text)', fontSize: 14,
                 fontFamily: 'monospace', outline: 'none',
                 transition: 'border-color 0.15s',
+                minWidth: 0,
               }}
               onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
               onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
@@ -77,6 +85,7 @@ export default function SettingsPage() {
               borderRadius: 8, color: saved ? '#3ecf96' : '#fff',
               fontFamily: 'Syne', fontWeight: 700, fontSize: 14,
               cursor: 'pointer', minWidth: 80, transition: 'all 0.2s',
+              whiteSpace: 'nowrap',
             }}>
               {saved ? '✓ Saved' : 'Save'}
             </button>

@@ -30,24 +30,24 @@ export default function ProfilePage() {
   if (status === 'loading') return null
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px' }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
       <div className="fade-up">
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 36 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 36, flexWrap: 'wrap' }} className="xs:flex-col sm:flex-row">
           {session?.user?.image ? (
-            <img src={session.user.image} alt="" style={{ width: 56, height: 56, borderRadius: '50%' }} />
+            <img src={session.user.image} alt="" style={{ width: 56, height: 56, borderRadius: '50%', flexShrink: 0 }} />
           ) : (
             <div style={{
               width: 56, height: 56, borderRadius: '50%',
               background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 22, fontWeight: 700, color: '#fff',
+              fontSize: 22, fontWeight: 700, color: '#fff', flexShrink: 0,
             }}>
               {session?.user?.name?.[0]?.toUpperCase()}
             </div>
           )}
           <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em' }}>
+            <h1 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 800, letterSpacing: '-0.03em' }}>
               {session?.user?.name}
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: 13 }}>{session?.user?.email}</p>
@@ -55,7 +55,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 12, marginBottom: 36 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12, marginBottom: 36 }} className="xs:grid-cols-2 sm:grid-cols-4">
           {[
             { emoji: '📋', label: 'Plans created', value: data?.allTimePlans ?? '—' },
             { emoji: '🔥', label: 'Current streak', value: data?.currentStreak != null ? `${data.currentStreak} days` : '—' },

@@ -24,21 +24,21 @@ export default function ScheduleView({ plan, onReset }: Props) {
     <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, flexDirection: 'row' }} className="xs:flex-col sm:flex-row">
         <div>
           <p style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Your schedule
           </p>
-          <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.03em' }}>
+          <h2 style={{ fontSize: 'clamp(18px, 5vw, 22px)', fontWeight: 700, letterSpacing: '-0.03em' }}>
             {new Date(plan.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </h2>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={copyAsText} style={actionBtnStyle}>
+        <div style={{ display: 'flex', gap: 8, width: '100%' }} className="xs:w-full sm:w-auto">
+          <button onClick={copyAsText} style={{...actionBtnStyle, flex: 1}} className="sm:flex-none">
             Copy as text
           </button>
           {onReset && (
-            <button onClick={onReset} style={{ ...actionBtnStyle, borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+            <button onClick={onReset} style={{ ...actionBtnStyle, borderColor: 'var(--accent)', color: 'var(--accent)', flex: 1 }} className="sm:flex-none">
               New plan
             </button>
           )}

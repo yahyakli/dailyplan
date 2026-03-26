@@ -11,15 +11,16 @@ export default function Home() {
 
   return (
     <KeyGate>
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
 
         {!plan && !loading && (
           <div style={{ marginBottom: 32 }}>
-            <h1 style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 10 }}>
-              What&apos;s on your plate<br />
+            <h1 style={{ fontSize: 'clamp(28px, 7vw, 36px)', fontWeight: 800, letterSpacing: '-0.04em', lineHeight: 1.1, marginBottom: 10 }}>
+              What&apos;s on your plate
+              <br />
               <span className="gradient-text">today?</span>
             </h1>
-            <p style={{ color: 'var(--muted)', fontSize: 15 }}>
+            <p style={{ color: 'var(--muted)', fontSize: 'clamp(14px, 2.5vw, 15px)' }}>
               Brain-dump everything. Mistral turns it into a realistic time-blocked day.
             </p>
           </div>

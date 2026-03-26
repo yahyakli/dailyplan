@@ -134,7 +134,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       </div>
 
       {/* Time pickers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }} className="xs:grid-cols-2 sm:grid-cols-3">
         <TimeInput label="Start time" value={startTime} onChange={setStartTime} />
         <TimeInput label="End time" value={endTime} onChange={setEndTime} />
         <div>

@@ -24,13 +24,13 @@ export default function LeaderboardPage() {
   const currentUserId = (session?.user as { id?: string })?.id
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px' }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
       <div className="fade-up">
         <p style={{ fontSize: 12, fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 8 }}>
           Top planners
         </p>
-        <h1 style={{ fontSize: 30, fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>Leaderboard</h1>
-        <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 32 }}>
+        <h1 style={{ fontSize: 'clamp(24px, 7vw, 30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>Leaderboard</h1>
+        <p style={{ color: 'var(--muted)', fontSize: 'clamp(13px, 2.5vw, 14px)', marginBottom: 32 }}>
           Earn points by creating plans, maintaining streaks, and hitting perfect days.
         </p>
 

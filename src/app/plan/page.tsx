@@ -31,7 +31,7 @@ function PlanContent() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 14, color: 'var(--muted)', fontFamily: 'Syne', marginBottom: 8 }}>Loading plan...</div>
           {[...Array(5)].map((_, i) => (
@@ -44,11 +44,11 @@ function PlanContent() {
 
   if (!plan) {
     return (
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)', textAlign: 'center' }} className="px-4 sm:px-6">
         <div className="fade-up" style={{ paddingTop: 60 }}>
           <div style={{ fontSize: 48, marginBottom: 20 }}>📅</div>
-          <h2 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 700, marginBottom: 12 }}>No plan found</h2>
-          <p style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 28 }}>
+          <h2 style={{ fontFamily: 'Syne', fontSize: 'clamp(20px, 5vw, 22px)', fontWeight: 700, marginBottom: 12 }}>No plan found</h2>
+          <p style={{ color: 'var(--muted)', fontSize: 'clamp(13px, 2.5vw, 14px)', marginBottom: 28 }}>
             This plan doesn&apos;t exist or hasn&apos;t been created yet.
           </p>
           <button
@@ -69,7 +69,7 @@ function PlanContent() {
   }
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px' }}>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
       <ScheduleView
         plan={plan}
         onReset={() => router.push('/')}
@@ -81,7 +81,7 @@ function PlanContent() {
 export default function PlanPage() {
   return (
     <Suspense fallback={
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[...Array(5)].map((_, i) => (
             <div key={i} className="skeleton" style={{ height: 72 }} />
