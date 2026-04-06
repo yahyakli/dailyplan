@@ -10,9 +10,14 @@ export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
-    const { tasks, startTime, endTime, context, apiKey, date } = await req.json()
+    const { tasks, startTime, endTime, context, date } = await req.json()
 
-    if (!tasks || !startTime || !endTime || !apiKey) {
+    const apiKey = process.env.MISTRAL_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Server configuration error: Missing MISTRAL_API_KEY' }, { status: 500 })
+    }
+
+    if (!tasks || !startTime || !endTime) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -43,7 +48,7 @@ export async function POST(req: NextRequest) {
       
       // Provide more specific error messages
       if (response.status === 401) {
-        message = 'Invalid Mistral API key. Please check your key in Settings.'
+        message = 'Invalid Mistral API key configured on the server.'
       } else if (response.status === 429) {
         message = 'Rate limit exceeded. Please try again in a moment.'
       }

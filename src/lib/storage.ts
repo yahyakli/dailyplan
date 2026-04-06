@@ -1,23 +1,7 @@
 import type { Plan } from './types'
 
-const KEY_API_KEY = 'dailyplan:apikey'
 const KEY_PLAN_PREFIX = 'dailyplan:plan:'
 const KEY_GUEST_PLAN_COUNT = 'dailyplan:guestcount'
-
-// ─── API Key ──────────────────────────────────────────────────────────────────
-
-export function getApiKey(): string | null {
-  if (typeof window === 'undefined') return null
-  return localStorage.getItem(KEY_API_KEY)
-}
-
-export function setApiKey(key: string): void {
-  localStorage.setItem(KEY_API_KEY, key)
-}
-
-export function clearApiKey(): void {
-  localStorage.removeItem(KEY_API_KEY)
-}
 
 // ─── Plans (guest localStorage) ───────────────────────────────────────────────
 

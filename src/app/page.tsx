@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import KeyGate from '@/components/KeyGate'
 import BrainDump from '@/components/BrainDump'
 import ScheduleView from '@/components/ScheduleView'
 import type { Plan } from '@/lib/types'
@@ -12,8 +11,7 @@ export default function Home() {
   const t = useTranslations()
 
   return (
-    <KeyGate>
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
 
         {!plan && !loading && (
           <div style={{ marginBottom: 32 }}>
@@ -44,6 +42,5 @@ export default function Home() {
         ) : null}
 
       </div>
-    </KeyGate>
   )
 }

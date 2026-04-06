@@ -65,7 +65,24 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   return (
     <LanguageContext.Provider value={{ locale, setLocale, translations, isRtl }}>
-      {children}
+      {!isLoaded ? (
+        <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          {/* Navbar Skeleton */}
+          <div style={{ height: 56, borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 clamp(16px, 4vw, 24px)' }}>
+            <div className="skeleton" style={{ width: 120, height: 28, borderRadius: 6 }} />
+            <div className="skeleton" style={{ width: 200, height: 36, borderRadius: 18 }} />
+          </div>
+          {/* Main Content Skeleton */}
+          <div style={{ maxWidth: 680, width: '100%', margin: '0 auto', padding: '40px 24px' }}>
+            <div className="skeleton" style={{ width: '50%', height: 40, borderRadius: 8, marginBottom: 16 }} />
+            <div className="skeleton" style={{ width: '30%', height: 20, borderRadius: 4, marginBottom: 48 }} />
+            <div className="skeleton" style={{ width: '100%', height: 64, borderRadius: 12, marginBottom: 12 }} />
+            <div className="skeleton" style={{ width: '100%', height: 240, borderRadius: 16 }} />
+          </div>
+        </div>
+      ) : (
+        children
+      )}
     </LanguageContext.Provider>
   )
 }

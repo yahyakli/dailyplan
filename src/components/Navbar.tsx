@@ -7,7 +7,7 @@ import LanguageSwitcher from './LanguageSwitcher'
 import { useLanguage, useTranslations } from '@/lib/i18n/LanguageContext'
 
 export default function Navbar() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
@@ -71,14 +71,13 @@ export default function Navbar() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="hidden sm:flex">
         <NavLink href="/">{t('nav.plan')}</NavLink>
         <NavLink href="/history">{t('nav.history')}</NavLink>
-        {session && <NavLink href="/leaderboard">{t('nav.leaderboard')}</NavLink>}
-        {session && <NavLink href="/badges">{t('nav.badges') || 'Badges'}</NavLink>}
-        {session && <NavLink href="/profile">{t('nav.profile')}</NavLink>}
-        <NavLink href="/settings">{t('nav.settings')}</NavLink>
+        {!session && <NavLink href="/settings">{t('nav.settings')}</NavLink>}
 
         <LanguageSwitcher />
 
-        {session ? (
+        {status === 'loading' ? (
+          <div className="skeleton" style={{ marginLeft: 8, width: 84, height: 36, borderRadius: 24 }} />
+        ) : session ? (
           <div ref={profileMenuRef} style={{ position: 'relative', marginLeft: 8 }}>
             <button
               onClick={() => setProfileMenuOpen(!profileMenuOpen)}
@@ -112,8 +111,14 @@ export default function Navbar() {
                 position: 'absolute', right: 0, top: 'calc(100% + 8px)',
                 background: isDark ? 'var(--surface)' : '#f5f5fa',
                 border: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`,
-                borderRadius: 10, padding: 4, minWidth: 140, zIndex: 100,
+                borderRadius: 10, padding: 4, minWidth: 160, zIndex: 100,
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
               }}>
+                <DropdownLink href="/profile" onClick={() => setProfileMenuOpen(false)}>{t('nav.profile')}</DropdownLink>
+                <DropdownLink href="/badges" onClick={() => setProfileMenuOpen(false)}>{t('nav.badges') || 'Badges'}</DropdownLink>
+                <DropdownLink href="/leaderboard" onClick={() => setProfileMenuOpen(false)}>{t('nav.leaderboard')}</DropdownLink>
+                <DropdownLink href="/settings" onClick={() => setProfileMenuOpen(false)}>{t('nav.settings')}</DropdownLink>
+                <div style={{ height: 1, background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', margin: '4px 0' }} />
                 <button
                   onClick={() => { signOut({ callbackUrl: '/' }); setProfileMenuOpen(false) }}
                   style={{
@@ -169,17 +174,30 @@ export default function Navbar() {
         }}>
           <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)}>{t('nav.plan')}</MobileNavLink>
           <MobileNavLink href="/history" onClick={() => setMobileMenuOpen(false)}>{t('nav.history')}</MobileNavLink>
-          {session && <MobileNavLink href="/leaderboard" onClick={() => setMobileMenuOpen(false)}>{t('nav.leaderboard')}</MobileNavLink>}
-          {session && <MobileNavLink href="/badges" onClick={() => setMobileMenuOpen(false)}>{t('nav.badges') || 'Badges'}</MobileNavLink>}
-          {session && <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)}>{t('nav.profile')}</MobileNavLink>}
-          <MobileNavLink href="/settings" onClick={() => setMobileMenuOpen(false)}>{t('nav.settings')}</MobileNavLink>
+          {status === 'loading' ? (
+            <>
+              <div className="skeleton" style={{ height: 40, borderRadius: 6, margin: '4px 0' }} />
+              <div className="skeleton" style={{ height: 40, borderRadius: 6, margin: '4px 0' }} />
+            </>
+          ) : session ? (
+            <>
+              <MobileNavLink href="/leaderboard" onClick={() => setMobileMenuOpen(false)}>{t('nav.leaderboard')}</MobileNavLink>
+              <MobileNavLink href="/badges" onClick={() => setMobileMenuOpen(false)}>{t('nav.badges') || 'Badges'}</MobileNavLink>
+              <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)}>{t('nav.profile')}</MobileNavLink>
+              <MobileNavLink href="/settings" onClick={() => setMobileMenuOpen(false)}>{t('nav.settings')}</MobileNavLink>
+            </>
+          ) : (
+            <MobileNavLink href="/settings" onClick={() => setMobileMenuOpen(false)}>{t('nav.settings')}</MobileNavLink>
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', padding: '8px 0 0 0', marginBottom: 8 }}>
             <LanguageSwitcher />
           </div>
 
           <div style={{ borderTop: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`, marginTop: 8, paddingTop: 8 }}>
-            {session ? (
+            {status === 'loading' ? (
+              <div className="skeleton" style={{ height: 36, borderRadius: 6 }} />
+            ) : session ? (
               <button
                 onClick={() => { signOut({ callbackUrl: '/' }); setMobileMenuOpen(false) }}
                 style={{
@@ -234,6 +252,22 @@ function MobileNavLink({ href, children, onClick }: { href: string; children: Re
     }}
       onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
       onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+    >
+      {children}
+    </Link>
+  )
+}
+
+function DropdownLink({ href, children, onClick }: { href: string; children: React.ReactNode; onClick: () => void }) {
+  return (
+    <Link href={href} onClick={onClick} style={{
+      display: 'block', width: '100%', padding: '8px 12px', textAlign: 'left',
+      color: 'var(--muted)', fontWeight: 500,
+      textDecoration: 'none', borderRadius: 6, fontSize: 13,
+      transition: 'color 0.15s, background 0.15s',
+    }}
+      onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'rgba(124,106,247,0.05)' }}
+      onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
     >
       {children}
     </Link>

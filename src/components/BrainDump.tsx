@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { getApiKey, savePlanLocally, getGuestPlanCount } from '@/lib/storage'
+import { savePlanLocally, getGuestPlanCount } from '@/lib/storage'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import type { Plan, Badge } from '@/lib/types'
@@ -24,11 +24,6 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const t = useTranslations()
 
   const handleSubmit = async () => {
-    const apiKey = getApiKey()
-    if (!apiKey) {
-      toast.error(t('braindump.errorNoKey'))
-      return
-    }
     if (!tasks.trim()) {
       toast.error(t('braindump.errorNoTasks'))
       return
@@ -43,7 +38,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       const res = await fetch('/api/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tasks, startTime, endTime, context, apiKey, date: localDate }),
+        body: JSON.stringify({ tasks, startTime, endTime, context, date: localDate }),
       })
 
       const data = await res.json()
