@@ -1,5 +1,5 @@
 'use client'
-import { useSession, signOut } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
 import { Menu, X } from 'lucide-react'
@@ -108,7 +108,7 @@ export default function Navbar() {
 
             {profileMenuOpen && (
               <div style={{
-                position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+                position: 'absolute', [isRtl ? 'left' : 'right']: 0, top: 'calc(100% + 8px)',
                 background: isDark ? 'var(--surface)' : '#f5f5fa',
                 border: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`,
                 borderRadius: 10, padding: 4, minWidth: 160, zIndex: 100,

@@ -3,10 +3,12 @@
 import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 import { Sun, Moon, Monitor } from 'lucide-react'
+import { useTranslations } from '@/lib/i18n/LanguageContext'
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const t = useTranslations()
 
   useEffect(() => {
     setMounted(true)
@@ -31,7 +33,7 @@ export function ThemeToggle() {
             marginBottom: 12,
           }}
         >
-          Appearance
+          {typeof t('settings.appearance') === 'string' ? t('settings.appearance') : 'Appearance'}
         </label>
         <div
           style={{
@@ -42,9 +44,9 @@ export function ThemeToggle() {
           className="sm:grid-cols-3 xs:grid-cols-3"
         >
           {[
-            { value: 'light', label: 'Light', icon: Sun },
-            { value: 'dark', label: 'Dark', icon: Moon },
-            { value: 'system', label: 'System', icon: Monitor },
+            { value: 'light', label: typeof t('settings.light') === 'string' ? t('settings.light') : 'Light', icon: Sun },
+            { value: 'dark', label: typeof t('settings.dark') === 'string' ? t('settings.dark') : 'Dark', icon: Moon },
+            { value: 'system', label: typeof t('settings.system') === 'string' ? t('settings.system') : 'System', icon: Monitor },
           ].map(({ value, label, icon: Icon }) => (
             <button
               key={value}
@@ -81,7 +83,7 @@ export function ThemeToggle() {
         </div>
       </div>
       <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>
-        <p>Choose how DailyPlan appears on your device. Light mode is perfect for daytime use, while dark mode is easier on your eyes at night.</p>
+        <p>{typeof t('settings.appearanceDesc') === 'string' ? t('settings.appearanceDesc') : 'Choose how DailyPlan appears on your device. Light mode is perfect for daytime use, while dark mode is easier on your eyes at night.'}</p>
       </div>
     </div>
   )
