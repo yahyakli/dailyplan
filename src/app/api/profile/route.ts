@@ -7,7 +7,10 @@ import { Streak } from '@/models/Streak'
 import { Achievement } from '@/models/Achievement'
 import type { BadgeId } from '@/lib/types'
 
+import { Plan } from '@/models/Plan'
+
 export async function GET() {
+
   try {
     const session = await getServerSession()
     if (!session?.user?.email) {
@@ -44,6 +47,67 @@ export async function GET() {
 
   } catch (err) {
     console.error('Profile API error:', err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
+export async function PUT(req: Request) {
+  try {
+    const session = await getServerSession()
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    const { name } = await req.json()
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return NextResponse.json({ error: 'Invalid name provided' }, { status: 400 })
+    }
+
+    await connectDB()
+    const user = await User.findOneAndUpdate(
+      { email: session.user.email },
+      { $set: { name: name.trim() } },
+      { new: true }
+    )
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true, name: user.name })
+  } catch (err) {
+    console.error('Profile Update API error:', err)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await getServerSession()
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    await connectDB()
+    const user = await User.findOne({ email: session.user.email })
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    const userId = user._id
+
+    // Cascading delete
+    await Promise.all([
+      Plan.deleteMany({ userId }),
+      Score.findOneAndDelete({ userId }),
+      Streak.findOneAndDelete({ userId }),
+      Achievement.findOneAndDelete({ userId }),
+      User.findByIdAndDelete(userId)
+    ])
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    console.error('Account deletion error:', err)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

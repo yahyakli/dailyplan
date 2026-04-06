@@ -58,7 +58,10 @@ const handler = NextAuth({
       return true
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === 'update' && session?.name) {
+        token.name = session.name
+      }
       if (user) {
         await connectDB()
         const dbUser = await User.findOne({ email: token.email! })
@@ -70,6 +73,9 @@ const handler = NextAuth({
     async session({ session, token }) {
       if (token.id && session.user) {
         (session.user as { id?: string }).id = token.id as string
+        if (token.name) {
+          session.user.name = token.name as string
+        }
       }
       return session
     },
