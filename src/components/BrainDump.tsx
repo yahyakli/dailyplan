@@ -4,7 +4,7 @@ import { savePlanLocally, getGuestPlanCount } from '@/lib/storage'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import type { Plan, Badge } from '@/lib/types'
-import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { useTranslations, useLanguage } from '@/lib/i18n/LanguageContext'
 import BadgeUnlockToast from './BadgeUnlockToast'
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
 
 export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const { data: session } = useSession()
+  const { locale } = useLanguage()
   const [tasks, setTasks] = useState('')
   const [startTime, setStartTime] = useState('09:00')
   const [endTime, setEndTime] = useState('18:00')
@@ -38,7 +39,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       const res = await fetch('/api/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tasks, startTime, endTime, context, date: localDate }),
+        body: JSON.stringify({ tasks, startTime, endTime, context, date: localDate, locale }),
       })
 
       const data = await res.json()

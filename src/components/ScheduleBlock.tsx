@@ -10,6 +10,49 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function ScheduleBlock({ block, index }: { block: Block; index: number }) {
   const icon = CATEGORY_ICONS[block.category] || '📌'
+  const isBreak = block.category === 'break'
+
+  if (isBreak) {
+    return (
+      <div
+        className="fade-up"
+        style={{
+          border: '1px solid rgba(251,191,36,0.25)',
+          borderRadius: 10,
+          padding: '12px 16px',
+          display: 'flex',
+          gap: 14,
+          alignItems: 'flex-start',
+          background: 'rgba(251,191,36,0.06)',
+          animationDelay: `${index * 0.05}s`,
+          marginBottom: 8,
+        }}
+      >
+        {/* Time column */}
+        <div style={{ minWidth: 80, paddingTop: 2 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)', fontFamily: 'Syne' }}>
+            {block.startTime}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--muted)', opacity: 0.6 }}>
+            → {block.endTime}
+          </div>
+        </div>
+        {/* Icon */}
+        <div style={{ fontSize: 18, paddingTop: 2 }}>{icon}</div>
+        {/* Title */}
+        <div style={{ flex: 1, paddingTop: 2 }}>
+          <span style={{ fontFamily: 'Syne', fontWeight: 600, fontSize: 14, color: 'rgba(251,191,36,0.9)' }}>
+            {block.title}
+          </span>
+          {block.notes && (
+            <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 5, lineHeight: 1.5 }}>
+              {block.notes}
+            </p>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -22,6 +65,7 @@ export default function ScheduleBlock({ block, index }: { block: Block; index: n
         gap: 14,
         alignItems: 'flex-start',
         animationDelay: `${index * 0.05}s`,
+        marginBottom: 8,
       }}
     >
       {/* Time column */}
@@ -66,4 +110,4 @@ export default function ScheduleBlock({ block, index }: { block: Block; index: n
       </div>
     </div>
   )
-}
+}

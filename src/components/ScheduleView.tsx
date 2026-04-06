@@ -78,10 +78,32 @@ export default function ScheduleView({ plan, onReset }: Props) {
       </div>
 
       {/* Blocks */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {plan.blocks.map((block, i) => (
-          <ScheduleBlock key={`${block.startTime}-${i}`} block={block} index={i} />
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {plan.blocks.map((block, i) => {
+          const next = plan.blocks[i + 1]
+          const gapMin = next ? calcGapMinutes(block.endTime, next.startTime) : 0
+          return (
+            <div key={`${block.startTime}-${i}`}>
+              <ScheduleBlock block={block} index={i} />
+              {gapMin > 0 && (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '4px 16px', margin: '2px 0',
+                }}>
+                  <div style={{ flex: 1, height: 1, background: 'var(--border)', opacity: 0.5 }} />
+                  <span style={{
+                    fontSize: 10, color: 'var(--muted)', fontFamily: 'Syne',
+                    fontWeight: 600, letterSpacing: '0.08em', whiteSpace: 'nowrap',
+                    opacity: 0.7,
+                  }}>
+                    · {gapMin} min ·
+                  </span>
+                  <div style={{ flex: 1, height: 1, background: 'var(--border)', opacity: 0.5 }} />
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       {/* Overflow */}
@@ -90,6 +112,16 @@ export default function ScheduleView({ plan, onReset }: Props) {
       )}
     </div>
   )
+}
+
+function timeToMinutes(t: string): number {
+  const [h, m] = t.split(':').map(Number)
+  return h * 60 + m
+}
+
+function calcGapMinutes(endTime: string, nextStart: string): number {
+  const gap = timeToMinutes(nextStart) - timeToMinutes(endTime)
+  return gap > 0 ? gap : 0
 }
 
 const actionBtnStyle: React.CSSProperties = {
