@@ -53,13 +53,19 @@ export type BadgeId =
   | 'first_plan'
   | 'streak_3'
   | 'streak_7'
+  | 'streak_14'
   | 'streak_30'
   | 'plans_10'
   | 'plans_30'
+  | 'plans_50'
+  | 'plans_100'
   | 'perfect_day'
   | 'perfect_week'
   | 'early_bird'
   | 'night_owl'
+  | 'deep_focus'
+  | 'variety'
+  | 'weekend_warrior'
 
 export interface Badge {
   id: BadgeId

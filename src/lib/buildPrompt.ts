@@ -2,7 +2,8 @@ export function buildPrompt(
   tasks: string,
   startTime: string,
   endTime: string,
-  context?: string
+  context?: string,
+  date?: string
 ): { systemPrompt: string; userPrompt: string } {
   const systemPrompt = `You are a professional daily scheduler. Your job is to convert a brain dump of tasks into a realistic, time-blocked daily schedule.
 
@@ -41,7 +42,7 @@ ${context ? `Context / energy level: ${context}` : ''}
 Tasks to schedule:
 ${tasks}
 
-Return the complete schedule as a JSON object matching the schema above. Today's date is ${new Date().toISOString().split('T')[0]}.`
+Return the complete schedule as a JSON object matching the schema above. Today's date is ${date || new Date().toISOString().split('T')[0]}.`
 
   return { systemPrompt, userPrompt }
 }

@@ -3,6 +3,7 @@
     "plan": "Plan",
     "history": "History",
     "leaderboard": "Leaderboard",
+    "badges": "Badges",
     "profile": "Profile",
     "settings": "Settings",
     "signIn": "Sign in",
@@ -79,6 +80,24 @@
     "days": "days",
     "badges": "Badges",
     "cta": "Create more plans to unlock badges and climb the leaderboard!"
+  },
+  "badges": {
+    "title": "Badges",
+    "subtitle": "Earn badges by creating plans, building streaks, and mastering your schedule.",
+    "unlocked": "unlocked",
+    "locked": "Locked",
+    "progress": "Progress",
+    "nextUp": "⚡ Next up",
+    "cta": "Keep creating plans to unlock all badges and become the ultimate planner!",
+    "categories": {
+      "milestones": "Milestones",
+      "streaks": "Streaks",
+      "special": "Special"
+    },
+    "unlock": {
+      "congrats": "Congratulations!",
+      "youEarned": "You earned a new badge!"
+    }
   },
   "settings": {
     "configuration": "Configuration",

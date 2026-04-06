@@ -10,14 +10,14 @@ export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
-    const { tasks, startTime, endTime, context, apiKey } = await req.json()
+    const { tasks, startTime, endTime, context, apiKey, date } = await req.json()
 
     if (!tasks || !startTime || !endTime || !apiKey) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     // Build prompt and call Mistral
-    const { systemPrompt, userPrompt } = buildPrompt(tasks, startTime, endTime, context)
+    const { systemPrompt, userPrompt } = buildPrompt(tasks, startTime, endTime, context, date)
 
     const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',

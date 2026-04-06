@@ -3,6 +3,7 @@
     "plan": "Plan",
     "history": "Historique",
     "leaderboard": "Classement",
+    "badges": "Badges",
     "profile": "Profil",
     "settings": "Paramètres",
     "signIn": "Se connecter",
@@ -79,6 +80,24 @@
     "days": "jours",
     "badges": "Badges",
     "cta": "Créez plus de plans pour débloquer des badges et grimper dans le classement !"
+  },
+  "badges": {
+    "title": "Badges",
+    "subtitle": "Gagnez des badges en créant des plans, en maintenant vos séries et en maîtrisant votre planning.",
+    "unlocked": "débloqués",
+    "locked": "Verrouillé",
+    "progress": "Progrès",
+    "nextUp": "⚡ Prochain",
+    "cta": "Continuez à créer des plans pour débloquer tous les badges et devenir le planificateur ultime !",
+    "categories": {
+      "milestones": "Jalons",
+      "streaks": "Séries",
+      "special": "Spéciaux"
+    },
+    "unlock": {
+      "congrats": "Félicitations !",
+      "youEarned": "Vous avez obtenu un nouveau badge !"
+    }
   },
   "settings": {
     "configuration": "Configuration",

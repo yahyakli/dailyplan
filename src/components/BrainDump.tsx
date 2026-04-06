@@ -3,8 +3,9 @@ import { useState } from 'react'
 import { getApiKey, savePlanLocally, getGuestPlanCount } from '@/lib/storage'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
-import type { Plan } from '@/lib/types'
+import type { Plan, Badge } from '@/lib/types'
 import { useTranslations } from '@/lib/i18n/LanguageContext'
+import BadgeUnlockToast from './BadgeUnlockToast'
 
 interface Props {
   onPlanReady: (plan: Plan) => void
@@ -19,6 +20,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const [context, setContext] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [newBadges, setNewBadges] = useState<Badge[]>([])
   const t = useTranslations()
 
   const handleSubmit = async () => {
@@ -37,10 +39,11 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
     onLoading(true)
 
     try {
+      const localDate = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD
       const res = await fetch('/api/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tasks, startTime, endTime, context, apiKey }),
+        body: JSON.stringify({ tasks, startTime, endTime, context, apiKey, date: localDate }),
       })
 
       const data = await res.json()
@@ -59,12 +62,24 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       const plan: Plan = data
       savePlanLocally(plan)
 
+      // Score update — now await to capture new badges
       if (session) {
-        fetch('/api/score', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(plan),
-        }).catch(console.error)
+        try {
+          const scoreRes = await fetch('/api/score', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(plan),
+          })
+          const scoreData = await scoreRes.json()
+          if (scoreRes.ok && scoreData.newBadges?.length > 0) {
+            setNewBadges(scoreData.newBadges)
+          }
+          if (scoreRes.ok && scoreData.pointsEarned) {
+            toast.success(`+${scoreData.pointsEarned} ${t('profile.totalPoints')} ⚡`)
+          }
+        } catch (e) {
+          console.error('Score update failed:', e)
+        }
       }
 
       toast.success(t('braindump.successToast'))
@@ -86,6 +101,14 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Badge unlock toast */}
+      {newBadges.length > 0 && (
+        <BadgeUnlockToast
+          badges={newBadges}
+          onDismiss={() => setNewBadges([])}
+        />
+      )}
 
       {/* Guest upsell after 3 plans */}
       {showUpsell && (

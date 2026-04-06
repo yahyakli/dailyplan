@@ -157,6 +157,60 @@ html:not(.dark) .priority-low    { background: #b8b8c8; }
   border-radius: 6px;
 }
 
+/* Badge Animations */
+@keyframes confetti-burst {
+  0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(
+           calc(cos(var(--angle)) * var(--distance)),
+           calc(sin(var(--angle)) * var(--distance) - 40px)
+         ) scale(0); opacity: 0; }
+}
+
+@keyframes badge-unlock-scale {
+  0%   { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+  50%  { transform: scale(1.15) rotate(2deg); opacity: 1; }
+  70%  { transform: scale(0.95) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@keyframes badge-emoji-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
+  50%      { transform: scale(1.08); filter: drop-shadow(0 0 20px rgba(124,106,247,0.5)); }
+}
+
+@keyframes progress-width {
+  from { width: 0; }
+}
+
+.confetti-particle {
+  animation: confetti-burst 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  pointer-events: none;
+}
+
+.badge-unlock-enter {
+  animation: badge-unlock-scale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.badge-emoji-glow {
+  animation: badge-emoji-pulse 2s ease-in-out infinite;
+}
+
+.progress-fill {
+  animation: progress-width 0.8s ease-out;
+}
+
+.badge-card-unlocked {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.badge-card-unlocked:hover {
+  border-color: rgba(124,106,247,0.5) !important;
+}
+
+.badge-card-locked:hover {
+  opacity: 0.7 !important;
+}
+
 @layer base {
   .theme {
     --font-heading:        var(--font-sans);

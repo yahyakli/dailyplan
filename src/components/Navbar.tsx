@@ -72,6 +72,7 @@ export default function Navbar() {
         <NavLink href="/">{t('nav.plan')}</NavLink>
         <NavLink href="/history">{t('nav.history')}</NavLink>
         {session && <NavLink href="/leaderboard">{t('nav.leaderboard')}</NavLink>}
+        {session && <NavLink href="/badges">{t('nav.badges') || 'Badges'}</NavLink>}
         {session && <NavLink href="/profile">{t('nav.profile')}</NavLink>}
         <NavLink href="/settings">{t('nav.settings')}</NavLink>
 
@@ -169,6 +170,7 @@ export default function Navbar() {
           <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)}>{t('nav.plan')}</MobileNavLink>
           <MobileNavLink href="/history" onClick={() => setMobileMenuOpen(false)}>{t('nav.history')}</MobileNavLink>
           {session && <MobileNavLink href="/leaderboard" onClick={() => setMobileMenuOpen(false)}>{t('nav.leaderboard')}</MobileNavLink>}
+          {session && <MobileNavLink href="/badges" onClick={() => setMobileMenuOpen(false)}>{t('nav.badges') || 'Badges'}</MobileNavLink>}
           {session && <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)}>{t('nav.profile')}</MobileNavLink>}
           <MobileNavLink href="/settings" onClick={() => setMobileMenuOpen(false)}>{t('nav.settings')}</MobileNavLink>
 
