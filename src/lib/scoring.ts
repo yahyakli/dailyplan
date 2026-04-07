@@ -1,22 +1,22 @@
 import type { Plan, BadgeId, Badge } from './types'
 
 export const BADGES: Record<BadgeId, Badge> = {
-  first_plan:       { id: 'first_plan',       emoji: '🚀', label: 'First Plan',       description: 'Created your very first plan' },
-  streak_3:         { id: 'streak_3',         emoji: '🔥', label: '3-Day Streak',     description: 'Planned 3 days in a row' },
-  streak_7:         { id: 'streak_7',         emoji: '⚡', label: 'Week Warrior',     description: 'Planned 7 days in a row' },
-  streak_14:        { id: 'streak_14',        emoji: '💪', label: 'Fortnight Force',  description: 'Planned 14 days in a row' },
-  streak_30:        { id: 'streak_30',        emoji: '💎', label: 'Iron Planner',     description: 'Planned 30 days in a row' },
-  plans_10:         { id: 'plans_10',         emoji: '🎯', label: '10 Plans',         description: 'Created 10 total plans' },
-  plans_30:         { id: 'plans_30',         emoji: '🏆', label: '30 Plans',         description: 'Created 30 total plans' },
-  plans_50:         { id: 'plans_50',         emoji: '🏅', label: '50 Plans',         description: 'Created 50 total plans' },
-  plans_100:        { id: 'plans_100',        emoji: '👑', label: 'Century Planner',  description: 'Created 100 total plans' },
-  perfect_day:      { id: 'perfect_day',      emoji: '✨', label: 'Perfect Day',      description: 'Scheduled everything with no overflow' },
-  perfect_week:     { id: 'perfect_week',     emoji: '🌟', label: 'Perfect Week',     description: '7 consecutive days with no overflow' },
-  early_bird:       { id: 'early_bird',       emoji: '🌅', label: 'Early Bird',       description: 'Created a plan before 8 AM' },
-  night_owl:        { id: 'night_owl',        emoji: '🦉', label: 'Night Owl',        description: 'Created a plan after 9 PM' },
-  deep_focus:       { id: 'deep_focus',       emoji: '🧠', label: 'Deep Focus',       description: 'Scheduled 3+ deep-work blocks in one plan' },
-  variety:          { id: 'variety',          emoji: '🎨', label: 'Renaissance',       description: 'Used all 5 block categories in one plan' },
-  weekend_warrior:  { id: 'weekend_warrior',  emoji: '🗓️', label: 'Weekend Warrior',  description: 'Created a plan on a weekend' },
+  first_plan:       { id: 'first_plan',       iconName: 'Rocket', label: 'First Plan',       description: 'Created your very first plan' },
+  streak_3:         { id: 'streak_3',         iconName: 'Flame', label: '3-Day Streak',     description: 'Planned 3 days in a row' },
+  streak_7:         { id: 'streak_7',         iconName: 'Zap', label: 'Week Warrior',     description: 'Planned 7 days in a row' },
+  streak_14:        { id: 'streak_14',        iconName: 'Dumbbell', label: 'Fortnight Force',  description: 'Planned 14 days in a row' },
+  streak_30:        { id: 'streak_30',        iconName: 'Gem', label: 'Iron Planner',     description: 'Planned 30 days in a row' },
+  plans_10:         { id: 'plans_10',         iconName: 'Target', label: '10 Plans',         description: 'Created 10 total plans' },
+  plans_30:         { id: 'plans_30',         iconName: 'Trophy', label: '30 Plans',         description: 'Created 30 total plans' },
+  plans_50:         { id: 'plans_50',         iconName: 'Medal', label: '50 Plans',         description: 'Created 50 total plans' },
+  plans_100:        { id: 'plans_100',        iconName: 'Crown', label: 'Century Planner',  description: 'Created 100 total plans' },
+  perfect_day:      { id: 'perfect_day',      iconName: 'Sparkles', label: 'Perfect Day',      description: 'Scheduled everything with no overflow' },
+  perfect_week:     { id: 'perfect_week',     iconName: 'Star', label: 'Perfect Week',     description: '7 consecutive days with no overflow' },
+  early_bird:       { id: 'early_bird',       iconName: 'Sunrise', label: 'Early Bird',       description: 'Created a plan before 8 AM' },
+  night_owl:        { id: 'night_owl',        iconName: 'Moon', label: 'Night Owl',        description: 'Created a plan after 9 PM' },
+  deep_focus:       { id: 'deep_focus',       iconName: 'Brain', label: 'Deep Focus',       description: 'Scheduled 3+ deep-work blocks in one plan' },
+  variety:          { id: 'variety',          iconName: 'Palette', label: 'Renaissance',       description: 'Used all 5 block categories in one plan' },
+  weekend_warrior:  { id: 'weekend_warrior',  iconName: 'Calendar', label: 'Weekend Warrior',  description: 'Created a plan on a weekend' },
 }
 
 // Badge category groupings for the badges page

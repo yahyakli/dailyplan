@@ -1,4 +1,5 @@
 import type { Plan, BlockCategory } from '@/lib/types'
+import { Check, ChevronRight, Lightbulb } from 'lucide-react'
 
 const CATEGORY_COLORS: Record<BlockCategory, string> = {
   'deep-work':     'var(--deep-work)',
@@ -84,8 +85,8 @@ export default function HistoryCard({ plan, onClick, index = 0 }: Props) {
               </span>
             )}
             {isPerfect && (
-              <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'rgba(62,207,150,0.15)', color: '#3ecf96', fontWeight: 600, fontFamily: 'Syne' }}>
-                ✓ Perfect
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'rgba(62,207,150,0.15)', color: '#3ecf96', fontWeight: 600, fontFamily: 'Syne' }}>
+                <Check size={12} strokeWidth={3} /> Perfect
               </span>
             )}
           </div>
@@ -101,7 +102,7 @@ export default function HistoryCard({ plan, onClick, index = 0 }: Props) {
         </div>
 
         {/* Arrow */}
-        <span style={{ color: 'var(--muted)', fontSize: 16, marginTop: 2 }}>→</span>
+        <span style={{ color: 'var(--muted)', marginTop: 2 }}><ChevronRight size={18} strokeWidth={2} /></span>
       </div>
 
       {/* Category bar */}
@@ -123,13 +124,17 @@ export default function HistoryCard({ plan, onClick, index = 0 }: Props) {
 
       {/* Insight preview */}
       {plan.insight && (
-        <p style={{
-          fontSize: 12, color: 'var(--muted)', lineHeight: 1.5,
-          fontStyle: 'italic',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
-          💡 {plan.insight}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Lightbulb size={12} color="var(--accent)" style={{ flexShrink: 0 }} />
+          <p style={{
+            flex: 1, minWidth: 0,
+            fontSize: 12, color: 'var(--muted)', lineHeight: 1.5,
+            fontStyle: 'italic',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>
+            {plan.insight}
+          </p>
+        </div>
       )}
     </button>
   )

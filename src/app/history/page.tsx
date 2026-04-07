@@ -6,6 +6,7 @@ import type { Plan } from '@/lib/types'
 import ScheduleView from '@/components/ScheduleView'
 import HistoryCard from '@/components/HistoryCard'
 import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { CalendarDays } from 'lucide-react'
 
 export default function HistoryPage() {
   const { data: session } = useSession()
@@ -46,7 +47,7 @@ export default function HistoryPage() {
 
         {plans.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--muted)' }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>📅</div>
+            <CalendarDays size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
             <p style={{ fontSize: 15 }}>{t('history.empty')} <a href="/" style={{ color: 'var(--accent)' }}>{t('history.createFirst')}</a></p>
           </div>
         ) : (

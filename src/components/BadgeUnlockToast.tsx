@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
 import type { Badge } from '@/lib/types'
+import BadgeIcon from './BadgeIcon'
 
 interface BadgeUnlockToastProps {
   badges: Badge[]
@@ -109,11 +110,12 @@ export default function BadgeUnlockToast({ badges, onDismiss }: BadgeUnlockToast
       >
         {/* Badge emoji */}
         <div className="badge-emoji-glow" style={{
-          fontSize: 64,
+          display: 'flex',
+          justifyContent: 'center',
+          color: 'var(--accent)',
           marginBottom: 16,
-          lineHeight: 1,
         }}>
-          {badge.emoji}
+          <BadgeIcon name={badge.iconName} size={64} strokeWidth={1.5} />
         </div>
 
         {/* Title */}

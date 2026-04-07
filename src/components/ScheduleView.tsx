@@ -3,6 +3,7 @@ import type { Plan } from '@/lib/types'
 import ScheduleBlock from './ScheduleBlock'
 import OverflowList from './OverflowList'
 import { useTranslations, useLanguage } from '@/lib/i18n/LanguageContext'
+import { Lightbulb, ListTodo, Flame, Inbox } from 'lucide-react'
 
 interface Props {
   plan: Plan
@@ -25,24 +26,29 @@ export default function ScheduleView({ plan, onReset }: Props) {
   }
 
   return (
-    <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, flexDirection: 'row' }} className="xs:flex-col sm:flex-row">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div>
-          <p style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          <p style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>
             {t('schedule.yourSchedule')}
           </p>
-          <h2 style={{ fontSize: 'clamp(18px, 5vw, 22px)', fontWeight: 700, letterSpacing: '-0.03em' }}>
-            {new Date(plan.date + 'T12:00:00').toLocaleDateString(locale === 'ar' ? 'ar-SA' : locale === 'fr' ? 'fr-FR' : 'en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          <h2 style={{ fontSize: 'clamp(18px, 5vw, 22px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.2 }}>
+            {new Date(plan.date + 'T12:00:00').toLocaleDateString(
+              locale === 'ar' ? 'ar-SA' : locale === 'fr' ? 'fr-FR' : 'en-US',
+              { weekday: 'long', month: 'long', day: 'numeric' }
+            )}
           </h2>
         </div>
-        <div style={{ display: 'flex', gap: 8, width: '100%' }} className="xs:w-full sm:w-auto">
-          <button onClick={copyAsText} style={{...actionBtnStyle, flex: 1}} className="sm:flex-none">
+
+        {/* Action buttons — full width on mobile */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={copyAsText} style={{ ...actionBtnStyle, flex: 1 }}>
             {t('schedule.copyAsText')}
           </button>
           {onReset && (
-            <button onClick={onReset} style={{ ...actionBtnStyle, borderColor: 'var(--accent)', color: 'var(--accent)', flex: 1 }} className="sm:flex-none">
+            <button onClick={onReset} style={{ ...actionBtnStyle, flex: 1, borderColor: 'var(--accent)', color: 'var(--accent)' }}>
               {t('schedule.newPlan')}
             </button>
           )}
@@ -52,27 +58,35 @@ export default function ScheduleView({ plan, onReset }: Props) {
       {/* AI Insight */}
       {plan.insight && (
         <div style={{
-          padding: '12px 16px', borderRadius: 10,
+          padding: '12px 14px', borderRadius: 12,
           background: 'rgba(124,106,247,0.08)', border: '1px solid rgba(124,106,247,0.2)',
           display: 'flex', gap: 10, alignItems: 'flex-start',
         }}>
-          <span style={{ fontSize: 16 }}>💡</span>
-          <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6, fontStyle: 'italic' }}>
+          <span style={{ flexShrink: 0, display: 'flex', alignItems: 'center', color: 'var(--accent)', paddingTop: 2 }}><Lightbulb size={18} /></span>
+          <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.65, fontStyle: 'italic' }}>
             {plan.insight}
           </p>
         </div>
       )}
 
-      {/* Stats strip */}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+      {/* Stats strip — equal thirds, scrollable on very small screens */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
         {[
-          { label: t('schedule.blocks'), value: plan.blocks.length },
-          { label: t('schedule.overflow'), value: plan.overflow.length },
-          { label: t('schedule.highPriority'), value: plan.blocks.filter(b => b.priority === 'high').length },
+          { label: t('schedule.blocks'), value: plan.blocks.length, emoji: <ListTodo size={22} strokeWidth={1.5} /> },
+          { label: t('schedule.highPriority'), value: plan.blocks.filter(b => b.priority === 'high').length, emoji: <Flame size={22} strokeWidth={1.5} color="#f75c6a" /> },
+          { label: t('schedule.overflow'), value: plan.overflow.length, emoji: <Inbox size={22} strokeWidth={1.5} /> },
         ].map(stat => (
-          <div key={stat.label} className="glass" style={{ padding: '8px 16px', borderRadius: 8, flex: '1 1 80px', textAlign: 'center' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'Syne' }}>{stat.value}</div>
-            <div style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</div>
+          <div key={stat.label} className="glass" style={{
+            padding: 'clamp(10px, 3vw, 14px) 8px',
+            borderRadius: 10, textAlign: 'center',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6, color: 'var(--muted)' }}>{stat.emoji}</div>
+            <div style={{ fontSize: 'clamp(18px, 5vw, 22px)', fontWeight: 700, fontFamily: 'Syne', lineHeight: 1 }}>
+              {stat.value}
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: 3, lineHeight: 1.2 }}>
+              {stat.label}
+            </div>
           </div>
         ))}
       </div>
@@ -88,17 +102,17 @@ export default function ScheduleView({ plan, onReset }: Props) {
               {gapMin > 0 && (
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '4px 16px', margin: '2px 0',
+                  padding: '2px 12px', margin: '0 0 4px 0',
                 }}>
-                  <div style={{ flex: 1, height: 1, background: 'var(--border)', opacity: 0.5 }} />
+                  <div style={{ flex: 1, height: 1, background: 'var(--border)', opacity: 0.4 }} />
                   <span style={{
                     fontSize: 10, color: 'var(--muted)', fontFamily: 'Syne',
-                    fontWeight: 600, letterSpacing: '0.08em', whiteSpace: 'nowrap',
-                    opacity: 0.7,
+                    fontWeight: 600, letterSpacing: '0.07em', whiteSpace: 'nowrap',
+                    opacity: 0.6,
                   }}>
                     · {gapMin} min ·
                   </span>
-                  <div style={{ flex: 1, height: 1, background: 'var(--border)', opacity: 0.5 }} />
+                  <div style={{ flex: 1, height: 1, background: 'var(--border)', opacity: 0.4 }} />
                 </div>
               )}
             </div>
@@ -125,8 +139,8 @@ function calcGapMinutes(endTime: string, nextStart: string): number {
 }
 
 const actionBtnStyle: React.CSSProperties = {
-  padding: '7px 14px',
+  padding: '10px 14px',
   background: 'var(--surface)', border: '1px solid var(--border)',
-  borderRadius: 8, color: 'var(--muted)', cursor: 'pointer',
+  borderRadius: 10, color: 'var(--muted)', cursor: 'pointer',
   fontSize: 13, fontWeight: 500, transition: 'color 0.15s, border-color 0.15s',
 }

@@ -6,6 +6,7 @@ import BadgeCard from '@/components/BadgeCard'
 import { BADGES, BADGE_CATEGORIES, getBadgeProgress } from '@/lib/scoring'
 import type { BadgeId } from '@/lib/types'
 import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { ClipboardList, Flame, Zap, Sparkles, Trophy } from 'lucide-react'
 
 interface ProfileData {
   totalPoints: number
@@ -97,13 +98,13 @@ export default function ProfilePage() {
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: 12, marginBottom: 36 }} className="xs:grid-cols-2 sm:grid-cols-4">
           {[
-            { emoji: '📋', label: t('profile.plansCreated'), value: data?.allTimePlans ?? '—' },
-            { emoji: '🔥', label: t('profile.currentStreak'), value: data?.currentStreak != null ? `${data.currentStreak} ${t('profile.days')}` : '—' },
-            { emoji: '⚡', label: t('profile.bestStreak'), value: data?.longestStreak != null ? `${data.longestStreak} ${t('profile.days')}` : '—' },
-            { emoji: '✨', label: t('profile.totalPoints'), value: data?.totalPoints?.toLocaleString() ?? '—' },
+            { icon: <ClipboardList size={24} strokeWidth={1.5} />, label: t('profile.plansCreated'), value: data?.allTimePlans ?? '—' },
+            { icon: <Flame size={24} strokeWidth={1.5} color="#f75c6a" />, label: t('profile.currentStreak'), value: data?.currentStreak != null ? `${data.currentStreak} ${t('profile.days')}` : '—' },
+            { icon: <Zap size={24} strokeWidth={1.5} color="#f7be46" />, label: t('profile.bestStreak'), value: data?.longestStreak != null ? `${data.longestStreak} ${t('profile.days')}` : '—' },
+            { icon: <Sparkles size={24} strokeWidth={1.5} color="var(--accent)" />, label: t('profile.totalPoints'), value: data?.totalPoints?.toLocaleString() ?? '—' },
           ].map(stat => (
             <div key={stat.label} className="glass" style={{ padding: '16px', borderRadius: 12, textAlign: 'center' }}>
-              <div style={{ fontSize: 24, marginBottom: 6 }}>{stat.emoji}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6, color: 'var(--muted)' }}>{stat.icon}</div>
               <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 20, marginBottom: 4 }}>{stat.value}</div>
               <div style={{ fontSize: 11, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{stat.label}</div>
             </div>
@@ -113,8 +114,8 @@ export default function ProfilePage() {
         {/* Overall Badge Progress */}
         <div className="glass" style={{ padding: '16px 20px', borderRadius: 12, marginBottom: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 14 }}>
-              🏆 {t('profile.badges')}
+            <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Trophy size={16} strokeWidth={2.5} color="var(--accent)" /> {t('profile.badges')}
             </span>
             <span style={{ fontSize: 13, color: 'var(--muted)' }}>
               {unlockedCount} / {totalBadges}

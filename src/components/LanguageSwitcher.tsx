@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { locales, type Locale } from '@/lib/i18n/config'
+import { Globe } from 'lucide-react'
 
 const localeLabels: Record<Locale, string> = {
   en: 'EN',
@@ -16,7 +17,7 @@ const localeFullNames: Record<Locale, string> = {
   ar: 'العربية',
 }
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ align, direction = 'down' }: { align?: 'left' | 'right', direction?: 'up' | 'down' } = {}) {
   const { locale, setLocale, isRtl } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -62,7 +63,7 @@ export default function LanguageSwitcher() {
         onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
         aria-label={`Switch language, currently ${localeFullNames[locale]}`}
       >
-        <span style={{ fontSize: 12 }}>🌐</span>
+        <span style={{ display: 'flex', alignItems: 'center' }}><Globe size={14} strokeWidth={2} /></span>
         <span>{localeLabels[locale]}</span>
       </button>
 
@@ -70,8 +71,8 @@ export default function LanguageSwitcher() {
         <div
           style={{
             position: 'absolute',
-            [isRtl ? 'left' : 'right']: 0,
-            top: 'calc(100% + 8px)',
+            ...(align ? { [align]: 0 } : { [isRtl ? 'left' : 'right']: 0 }),
+            ...(direction === 'up' ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }),
             background: 'var(--surface)',
             border: '1px solid var(--border)',
             borderRadius: 10,

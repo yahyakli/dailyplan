@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import type { Plan, Badge } from '@/lib/types'
 import { useTranslations, useLanguage } from '@/lib/i18n/LanguageContext'
+import { Star } from 'lucide-react'
 import BadgeUnlockToast from './BadgeUnlockToast'
 
 interface Props {
@@ -113,7 +114,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
           background: 'rgba(124,106,247,0.1)', border: '1px solid rgba(124,106,247,0.3)',
           display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
         }}>
-          <span style={{ fontSize: 16 }}>⭐</span>
+          <span style={{ display: 'flex', alignItems: 'center', color: 'var(--accent)' }}><Star size={18} strokeWidth={2.5} /></span>
           <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>
             {t('braindump.upsell').replace('{count}', String(guestCount))}
           </span>
@@ -150,11 +151,12 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         />
       </div>
 
-      {/* Time pickers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }} className="xs:grid-cols-2 sm:grid-cols-3">
+      {/* Time pickers — 2 col on mobile, 3 col on sm+ */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="sm:grid-cols-3">
         <TimeInput label={t('braindump.startTime')} value={startTime} onChange={setStartTime} />
         <TimeInput label={t('braindump.endTime')} value={endTime} onChange={setEndTime} />
-        <div>
+        {/* Context spans full width on mobile, 1 col on sm+ */}
+        <div style={{ gridColumn: '1 / -1' }} className="sm:col-auto">
           <label style={labelStyle}>{t('braindump.context')}</label>
           <input
             type="text"
@@ -180,16 +182,18 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         onClick={handleSubmit}
         disabled={loading}
         style={{
-          padding: '14px 24px',
+          width: '100%',
+          padding: '15px 24px',
           background: loading ? 'var(--border)' : 'linear-gradient(135deg, var(--accent), #9b8af7)',
-          border: 'none', borderRadius: 10,
+          border: 'none', borderRadius: 12,
           color: '#fff', fontSize: 15, fontWeight: 700,
           fontFamily: 'Syne', cursor: loading ? 'not-allowed' : 'pointer',
           transition: 'opacity 0.15s, transform 0.1s',
           letterSpacing: '-0.01em',
+          boxShadow: loading ? 'none' : '0 4px 20px rgba(124,106,247,0.35)',
         }}
-        onMouseEnter={e => { if (!loading) e.currentTarget.style.opacity = '0.9' }}
-        onMouseLeave={e => { e.currentTarget.style.opacity = '1' }}
+        onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
+        onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
       >
         {loading ? t('braindump.generating') : t('braindump.generate')}
       </button>
@@ -220,10 +224,11 @@ const labelStyle: React.CSSProperties = {
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 12px',
+  width: '100%', padding: '12px 14px',
   background: 'var(--surface)', border: '1px solid var(--border)',
-  borderRadius: 8, color: 'var(--text)', fontSize: 14,
+  borderRadius: 10, color: 'var(--text)', fontSize: 14,
   fontFamily: 'DM Sans', outline: 'none',
   transition: 'border-color 0.15s',
   colorScheme: 'dark',
+  minHeight: 46,
 }

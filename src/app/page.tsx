@@ -11,7 +11,7 @@ export default function Home() {
   const t = useTranslations()
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(20px, 5vw, 40px) clamp(16px, 4vw, 32px)' }}>
 
         {!plan && !loading && (
           <div style={{ marginBottom: 32 }}>

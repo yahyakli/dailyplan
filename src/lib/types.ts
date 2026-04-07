@@ -71,7 +71,7 @@ export interface Badge {
   id: BadgeId
   label: string
   description: string
-  emoji: string
+  iconName: string
   unlockedAt?: string
 }
 

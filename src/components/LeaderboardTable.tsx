@@ -1,5 +1,7 @@
 import type { LeaderboardEntry } from '@/lib/types'
 import { BADGES } from '@/lib/scoring'
+import BadgeIcon from './BadgeIcon'
+import { Trophy, Medal, Award, Flame } from 'lucide-react'
 
 export default function LeaderboardTable({ entries, currentUserId }: {
   entries: LeaderboardEntry[]
@@ -9,7 +11,8 @@ export default function LeaderboardTable({ entries, currentUserId }: {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {entries.map((entry, i) => {
         const isMe = entry.userId === currentUserId
-        const rankEmoji = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : null
+        const RankIcon = i === 0 ? Trophy : i === 1 ? Medal : i === 2 ? Award : null
+        const rankColor = i === 0 ? '#f59e0b' : i === 1 ? '#94a3b8' : i === 2 ? '#b45309' : undefined
 
         return (
           <div
@@ -25,9 +28,9 @@ export default function LeaderboardTable({ entries, currentUserId }: {
             }}
           >
             {/* Rank */}
-            <div style={{ minWidth: 36, textAlign: 'center' }}>
-              {rankEmoji ? (
-                <span style={{ fontSize: 20 }}>{rankEmoji}</span>
+            <div style={{ minWidth: 36, display: 'flex', justifyContent: 'center' }}>
+              {RankIcon ? (
+                <RankIcon size={22} color={rankColor} strokeWidth={2.5} />
               ) : (
                 <span style={{ fontSize: 13, fontFamily: 'Syne', fontWeight: 700, color: 'var(--muted)' }}>
                   #{entry.rank}
@@ -56,17 +59,17 @@ export default function LeaderboardTable({ entries, currentUserId }: {
                   {entry.name}
                   {isMe && <span style={{ color: 'var(--accent)', marginLeft: 6, fontSize: 12 }}>(you)</span>}
                 </span>
-                <span style={{ display: 'flex', gap: 2 }}>
+                <span style={{ display: 'flex', gap: 4, color: 'var(--accent)' }}>
                   {entry.topBadges.map(bid => (
-                    <span key={bid} title={BADGES[bid]?.label} style={{ fontSize: 13 }}>
-                      {BADGES[bid]?.emoji}
+                    <span key={bid} title={BADGES[bid]?.label} style={{ display: 'flex', alignItems: 'center' }}>
+                      <BadgeIcon name={BADGES[bid]?.iconName} size={14} strokeWidth={2.5} />
                     </span>
                   ))}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
                 <Stat label="plans" value={entry.allTimePlans} />
-                <Stat label="streak" value={`${entry.currentStreak}🔥`} />
+                <Stat label="streak" value={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>{entry.currentStreak}<Flame size={12} color="#f75c6a" strokeWidth={3} /></span>} />
               </div>
             </div>
 
@@ -84,9 +87,9 @@ export default function LeaderboardTable({ entries, currentUserId }: {
   )
 }
 
-function Stat({ label, value }: { label: string; value: string | number }) {
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+    <span style={{ fontSize: 11, color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
       {value} <span style={{ opacity: 0.6 }}>{label}</span>
     </span>
   )

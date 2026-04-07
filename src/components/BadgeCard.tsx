@@ -1,5 +1,6 @@
 'use client'
 import type { Badge } from '@/lib/types'
+import BadgeIcon from './BadgeIcon'
 
 interface BadgeCardProps {
   badge: Badge
@@ -41,14 +42,17 @@ export default function BadgeCard({ badge, unlocked = false, unlockedAt, progres
     >
       {/* Emoji */}
       <div style={{
-        fontSize: 28,
         filter: unlocked ? 'none' : 'grayscale(1)',
-        transition: 'filter 0.3s',
+        opacity: unlocked ? 1 : 0.6,
+        transition: 'filter 0.3s, opacity 0.3s',
         flexShrink: 0,
         width: 36,
-        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: unlocked ? 'var(--accent)' : 'var(--muted)'
       }}>
-        {badge.emoji}
+        <BadgeIcon name={badge.iconName} size={28} strokeWidth={2} />
       </div>
 
       {/* Text content */}
@@ -120,10 +124,11 @@ export default function BadgeCard({ badge, unlocked = false, unlockedAt, progres
         ) : (
           <div style={{
             width: 24, height: 24, borderRadius: '50%',
-            border: '2px solid var(--border)',
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <span style={{ fontSize: 10, color: 'var(--muted)' }}>🔒</span>
+            <BadgeIcon name="Lock" size={12} strokeWidth={2.5} color="var(--muted)" />
           </div>
         )}
       </div>
