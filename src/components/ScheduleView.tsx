@@ -120,7 +120,7 @@ export default function ScheduleView({ plan, onReset }: Props) {
       `DailyPlan — ${currentPlan.date}`,
       '─'.repeat(40),
       ...currentPlan.blocks.map((b) => `${b.startTime}–${b.endTime}  ${b.title} [${b.category}]`),
-      ...(currentPlan.overflow.length ? ['\nDid not fit:', ...currentPlan.overflow.map((t) => `  • ${t}`)] : []),
+      ...(currentPlan.overflow.length ? [`\n${t('schedule.didNotFit')}`, ...currentPlan.overflow.map((t) => `  • ${t}`)] : []),
       `\n💡 ${currentPlan.insight}`,
     ]
     navigator.clipboard.writeText(lines.join('\n'))
@@ -138,10 +138,10 @@ export default function ScheduleView({ plan, onReset }: Props) {
         const data = await res.json()
         if (res.ok) {
           if (data.newBadges?.length > 0) setNewBadges(data.newBadges)
-          if (data.pointsEarned) toast.success(`+${data.pointsEarned} Points ⚡`)
+          if (data.pointsEarned) toast.success(`+${data.pointsEarned} ${t('profile.totalPoints') || 'Points'} ⚡`)
         }
       } else {
-        toast.info('Guest Mode: Progress saved locally but won\'t sync across devices.')
+        toast.info(t('schedule.guestNotice'))
       }
       const updatedPlan: Plan = { ...currentPlan, status: 'active' }
       setCurrentPlan(updatedPlan)
@@ -225,8 +225,8 @@ export default function ScheduleView({ plan, onReset }: Props) {
         }))
 
         if (data.pointsEarned) {
-          toast.success(`+${data.pointsEarned} Points ⚡`, {
-            description: data.status === 'completed' ? 'Task completed!' : 'Task started!',
+          toast.success(`+${data.pointsEarned} ${t('profile.totalPoints') || 'Points'} ⚡`, {
+            description: data.status === 'completed' ? t('block.markAsDone') : t('block.start'),
           })
         }
       } else {
@@ -258,11 +258,11 @@ export default function ScheduleView({ plan, onReset }: Props) {
 
         const data = await res.json()
         if (!res.ok) {
-          toast.error(data.error || 'Failed to undo')
+          toast.error(data.error || t('schedule.undoFailed'))
           loadProgress()
           return
         }
-        toast.success(`Undo successful (-${data.pointsDeducted} Points)`)
+        toast.success(`${t('schedule.undoSuccess')} ${t('schedule.undoPoints').replace('{points}', data.pointsDeducted)}`)
       }
 
       // Update local state (shared for guests and users)
@@ -327,7 +327,7 @@ export default function ScheduleView({ plan, onReset }: Props) {
               marginBottom: 4,
             }}
           >
-            {t('schedule.yourSchedule')} {currentPlan.status === 'completed' && '— COMPLETED 🎉'}
+            {t('schedule.yourSchedule')} {currentPlan.status === 'completed' && `— ${t('schedule.completed')?.toUpperCase()} 🎉`}
           </p>
           <h2 style={{ fontSize: 'clamp(18px, 5vw, 22px)', fontWeight: 700, letterSpacing: '-0.03em', lineHeight: 1.2 }}>
             {new Date(currentPlan.date + 'T12:00:00').toLocaleDateString(
@@ -379,7 +379,7 @@ export default function ScheduleView({ plan, onReset }: Props) {
           }}
         >
           <PlayCircle size={20} />
-          {starting ? 'Starting...' : 'Start Plan & Enable Progress'}
+          {starting ? t('schedule.starting') : t('schedule.enableProgress')}
         </button>
       )}
 
@@ -402,10 +402,10 @@ export default function ScheduleView({ plan, onReset }: Props) {
             }}
           >
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text)' }}>
-              Plan Progress
+              {t('schedule.planProgress')}
             </span>
             <span style={{ fontSize: 12, color: 'var(--muted)' }}>
-              {completedCount}/{currentPlan.blocks.length} completed ({planCompletionPercentage}%)
+              {completedCount}/{currentPlan.blocks.length} {t('history.blocks')} ({planCompletionPercentage}%)
             </span>
           </div>
           <div
@@ -428,7 +428,7 @@ export default function ScheduleView({ plan, onReset }: Props) {
           </div>
           {inProgressCount > 0 && (
             <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>
-              {inProgressCount} task{inProgressCount > 1 ? 's' : ''} in progress
+              {inProgressCount} {t('history.blocks')} {t('schedule.inProgress')}
             </div>
           )}
         </div>
@@ -525,7 +525,7 @@ export default function ScheduleView({ plan, onReset }: Props) {
               color: 'var(--muted)',
             }}
           >
-            Loading progress...
+            {t('schedule.loadingProgress')}
           </div>
         )}
         {currentPlan.blocks.map((block, i) => {

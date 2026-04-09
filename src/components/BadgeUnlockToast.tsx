@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Badge } from '@/lib/types'
 import BadgeIcon from './BadgeIcon'
+import { useTranslations } from '@/lib/i18n/LanguageContext'
 
 interface BadgeUnlockToastProps {
   badges: Badge[]
@@ -9,6 +10,7 @@ interface BadgeUnlockToastProps {
 }
 
 export default function BadgeUnlockToast({ badges, onDismiss }: BadgeUnlockToastProps) {
+  const t = useTranslations()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [visible, setVisible] = useState(false)
   const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; angle: number; color: string }>>([])
@@ -128,7 +130,7 @@ export default function BadgeUnlockToast({ badges, onDismiss }: BadgeUnlockToast
           color: 'var(--accent, #7c6af7)',
           marginBottom: 8,
         }}>
-          Badge Unlocked!
+          {t('badges.unlock.unlockedNotice')}
         </div>
 
         {/* Badge name */}
@@ -170,7 +172,7 @@ export default function BadgeUnlockToast({ badges, onDismiss }: BadgeUnlockToast
           marginTop: 12,
           opacity: 0.6,
         }}>
-          Tap to continue
+          {t('badges.unlock.tapToContinue')}
         </div>
       </div>
     </div>

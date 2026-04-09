@@ -2,11 +2,13 @@ import type { LeaderboardEntry } from '@/lib/types'
 import { BADGES } from '@/lib/scoring'
 import BadgeIcon from './BadgeIcon'
 import { Trophy, Medal, Award, Flame } from 'lucide-react'
+import { useTranslations } from '@/lib/i18n/LanguageContext'
 
 export default function LeaderboardTable({ entries, currentUserId }: {
   entries: LeaderboardEntry[]
   currentUserId?: string
 }) {
+  const t = useTranslations()
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {entries.map((entry, i) => {
@@ -57,7 +59,7 @@ export default function LeaderboardTable({ entries, currentUserId }: {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontFamily: 'Syne', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {entry.name}
-                  {isMe && <span style={{ color: 'var(--accent)', marginLeft: 6, fontSize: 12 }}>(you)</span>}
+                  {isMe && <span style={{ color: 'var(--accent)', marginLeft: 6, fontSize: 12 }}>({t('leaderboard.you')})</span>}
                 </span>
                 <span style={{ display: 'flex', gap: 4, color: 'var(--accent)' }}>
                   {entry.topBadges.map(bid => (
@@ -68,8 +70,8 @@ export default function LeaderboardTable({ entries, currentUserId }: {
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
-                <Stat label="plans" value={entry.allTimePlans} />
-                <Stat label="streak" value={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>{entry.currentStreak}<Flame size={12} color="#f75c6a" strokeWidth={3} /></span>} />
+                <Stat label={t('history.blocks')} value={entry.allTimePlans} />
+                <Stat label={t('profile.currentStreak')} value={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>{entry.currentStreak}<Flame size={12} color="#f75c6a" strokeWidth={3} /></span>} />
               </div>
             </div>
 
@@ -78,7 +80,7 @@ export default function LeaderboardTable({ entries, currentUserId }: {
               <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 18, background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 {entry.totalPoints.toLocaleString()}
               </div>
-              <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>pts</div>
+              <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('leaderboard.pts')}</div>
             </div>
           </div>
         )

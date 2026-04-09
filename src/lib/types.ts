@@ -17,6 +17,7 @@ export interface Block {
 }
 
 export interface Plan {
+  _id?: string        // MongoDB ID
   date: string        // ISO date string
   blocks: Block[]
   overflow: string[]

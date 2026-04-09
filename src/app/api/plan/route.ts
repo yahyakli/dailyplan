@@ -22,13 +22,13 @@ export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
-    const { tasks, startTime, endTime, context, date, locale } = await req.json()
+    const { tasks, startTime, endTime, context, date, locale, apiKey: userApiKey } = await req.json()
 
-    const apiKey = process.env.MISTRAL_API_KEY
+    const apiKey = userApiKey || process.env.MISTRAL_API_KEY
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'Server configuration error: Missing MISTRAL_API_KEY' },
-        { status: 500 }
+        { error: 'No Mistral API key provided. Please add one in Settings.' },
+        { status: 401 }
       )
     }
 

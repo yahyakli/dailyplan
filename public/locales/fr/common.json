@@ -43,7 +43,16 @@
     "errorInvalidKey": "Clé API invalide. Vérifiez votre clé dans Paramètres.",
     "errorRateLimit": "Trop de requêtes. Veuillez réessayer dans un moment.",
     "errorModeration": "L'IA ne peut pas traiter cette demande car elle enfreint les consignes de sécurité.",
-    "errorInvalidSchedule": "L'IA n'a pas pu générer un planning correct. Veuillez fournir des tâches plus concrètes."
+    "errorInvalidSchedule": "L'IA n'a pas pu générer un planning correct. Veuillez fournir des tâches plus concrètes.",
+    "resolveConflicts": "Résoudre les conflits pour continuer",
+    "cooldown": "REFROIDISSEMENT",
+    "cooldownNote": "Pour éviter les limites de débit, veuillez attendre quelques secondes avant de générer à nouveau.",
+    "conflictDetected": "Conflits de temps détectés",
+    "conflictNote": "Veuillez choisir une autre date ou ajuster vos heures disponibles pour éviter les conflits.",
+    "startTimeErrorToday": "L'heure de début doit être au moins 30 minutes à partir de maintenant si vous planifiez pour aujourd'hui.",
+    "overview": "Aperçu du planning",
+    "loading": "Chargement...",
+    "occupiedNotice": "Vous avez {count} blocs programmés ce jour-là. Les nouveaux plans éviteront ces créneaux."
   },
   "schedule": {
     "yourSchedule": "Votre planning",
@@ -51,7 +60,17 @@
     "newPlan": "Nouveau plan",
     "blocks": "Blocs",
     "overflow": "Débordement",
-    "highPriority": "Haute priorité"
+    "highPriority": "Haute priorité",
+    "planProgress": "Progression du plan",
+    "completed": "terminé",
+    "inProgress": "en cours",
+    "starting": "Démarrage...",
+    "enableProgress": "Démarrer le plan & activer le progrès",
+    "loadingProgress": "Chargement du progrès...",
+    "guestNotice": "Mode Invité : Le progrès est sauvegardé localement mais ne sera pas synchronisé.",
+    "undoSuccess": "Annulation réussie",
+    "undoPoints": "(-{points} Points)",
+    "didNotFit": "N'a pas pu être inséré :"
   },
   "history": {
     "yourPlans": "Vos plans",
@@ -73,7 +92,9 @@
     "topPlanners": "Meilleurs planificateurs",
     "title": "Classement",
     "subtitle": "Gagnez des points en créant des plans, en maintenant vos séries et en réalisant des journées parfaites.",
-    "empty": "Pas encore de classement. Créez un plan pour apparaître !"
+    "empty": "Pas encore de classement. Créez un plan pour apparaître !",
+    "pts": "pts",
+    "you": "vous"
   },
   "profile": {
     "plansCreated": "Plans créés",
@@ -99,7 +120,9 @@
     },
     "unlock": {
       "congrats": "Félicitations !",
-      "youEarned": "Vous avez obtenu un nouveau badge !"
+      "youEarned": "Vous avez obtenu un nouveau badge !",
+      "unlockedNotice": "Badge Débloqué !",
+      "tapToContinue": "Appuyez pour continuer"
     }
   },
   "settings": {
@@ -134,7 +157,10 @@
     "keyNote": "C'est gratuit, ça prend 2 minutes et ne nécessite pas de carte bancaire.",
     "keyPlaceholder": "votre-clé-api-mistral",
     "errorEmpty": "La clé API ne peut pas être vide",
-    "successSaved": "Clé API enregistrée ! Redirection..."
+    "successSaved": "Clé API enregistrée ! Redirection...",
+    "aiConfiguration": "Configuration IA",
+    "aiDesc": "Entrez votre propre clé API Mistral pour alimenter le planificateur quotidien.",
+    "apiRemoved": "Clé API supprimée"
   },
   "keygate": {
     "title": "Clé API Mistral requise",
@@ -142,5 +168,21 @@
     "getKey": "Obtenir une clé Mistral gratuite →",
     "goSettings": "J'ai une clé — aller aux Paramètres",
     "privacy": "Votre clé ne quitte jamais votre navigateur — stockée uniquement dans localStorage."
+  },
+  "block": {
+    "markAsDone": "Marquer comme fait",
+    "lockNotice": "Terminez d'abord les tâches précédentes",
+    "undo": "ANNULER",
+    "skipped": "Passé",
+    "done": "Fait",
+    "options": "Options",
+    "undoStart": "Annuler le démarrage",
+    "trackProgress": "Suivre le progrès",
+    "trackNote": "Utilisez les préréglages pour mettre à jour le progrès",
+    "notes": "Notes",
+    "notesPlaceholder": "Comment ça se passe ?",
+    "nextUp": "SUIVANT",
+    "start": "DÉMARRER",
+    "dragNote": "Faites glisser ou appuyez sur un préréglage"
   }
 }

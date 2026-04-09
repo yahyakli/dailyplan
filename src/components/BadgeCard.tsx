@@ -1,6 +1,7 @@
 'use client'
 import type { Badge } from '@/lib/types'
 import BadgeIcon from './BadgeIcon'
+import { useTranslations } from '@/lib/i18n/LanguageContext'
 
 interface BadgeCardProps {
   badge: Badge
@@ -10,6 +11,7 @@ interface BadgeCardProps {
 }
 
 export default function BadgeCard({ badge, unlocked = false, unlockedAt, progress }: BadgeCardProps) {
+  const t = useTranslations()
   const showProgress = !unlocked && progress && progress.target > 1 && progress.current > 0
 
   return (
@@ -113,7 +115,7 @@ export default function BadgeCard({ badge, unlocked = false, unlockedAt, progres
               textTransform: 'uppercase',
               letterSpacing: '0.04em',
             }}>
-              ✓ Unlocked
+              ✓ {t('badges.unlocked')}
             </div>
             {unlockedAt && (
               <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 2 }}>

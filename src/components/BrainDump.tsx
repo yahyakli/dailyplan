@@ -132,6 +132,13 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       return
     }
 
+    const savedKey = localStorage.getItem('dailyplan:mistral_key')
+    if (!savedKey && !process.env.NEXT_PUBLIC_ALLOW_NO_KEY) {
+      toast.error(t('braindump.errorNoKey'))
+      setError(t('braindump.errorNoKey'))
+      return
+    }
+
     if (date === localTodayStr) {
       const now = new Date()
       const [h, m] = startTime.split(':').map(Number)
@@ -144,7 +151,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       
       // If start time is in the past OR less than 30 mins from now
       if (schedTime < nowTime + (29 * 60000)) {
-        toast.error('Start time must be at least 30 minutes from now if planning for today.')
+        toast.error(t('braindump.startTimeErrorToday'))
         return
       }
     }
@@ -159,7 +166,15 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       const res = await fetch('/api/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tasks, startTime, endTime, context, date, locale }),
+        body: JSON.stringify({ 
+          tasks, 
+          startTime, 
+          endTime, 
+          context, 
+          date, 
+          locale,
+          apiKey: savedKey 
+        }),
       })
 
       const data = await res.json()
@@ -174,8 +189,8 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         // Show conflict toast with suggestion
         toast.error(
           <div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>Time Conflict Detected</div>
-            <div style={{ fontSize: 13 }}>{data.suggestion || 'Please adjust your schedule'}</div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>{t('braindump.conflictDetected')}</div>
+            <div style={{ fontSize: 13 }}>{data.suggestion || t('braindump.conflictNote')}</div>
           </div>,
           { duration: 8000 }
         )
@@ -183,7 +198,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       }
 
       if (!res.ok) {
-        const errorMsg = data.error || 'Failed to generate schedule'
+        const errorMsg = data.error || (t('common.error') || 'Failed to generate schedule')
         const lowerError = errorMsg.toLowerCase()
 
         if (lowerError.includes('401') || lowerError.includes('invalid mistral api key') || lowerError.includes('unauthorized')) {
@@ -215,7 +230,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       onPlanReady(plan)
 
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Something went wrong'
+      const message = err instanceof Error ? err.message : (t('common.error') || 'Something went wrong')
       if (!message.includes('Invalid API key') && !message.includes('Too many requests') && !message.includes('Time conflict')) {
         setError(message)
       }
@@ -298,9 +313,9 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
 
       {/* Time pickers & Date */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'clamp(8px, 2vw, 12px)' }}>
           <DateInput
-            label="Date"
+            label={t('history.today')}
             value={date}
             onChange={setDate}
             min={localTodayStr}
@@ -308,7 +323,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
           />
           <TimeInput label={t('braindump.startTime')} value={startTime} onChange={setStartTime} />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'clamp(8px, 2vw, 12px)' }}>
           <TimeInput label={t('braindump.endTime')} value={endTime} onChange={setEndTime} />
           {/* Context */}
           <div>
@@ -349,7 +364,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
               textTransform: 'uppercase',
               letterSpacing: '0.06em',
             }}>
-              Schedule Overview
+              {t('braindump.overview')}
             </span>
             {isLoadingSlots && (
               <span style={{
@@ -357,7 +372,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
                 color: 'var(--accent)',
                 marginLeft: 'auto',
               }}>
-                Loading...
+                {t('common.loading')}
               </span>
             )}
           </div>
@@ -383,8 +398,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
             }}>
               <Info size={14} color="var(--accent)" style={{ marginTop: 2, flexShrink: 0 }} />
               <span style={{ fontSize: 12, color: 'var(--text)' }}>
-                You have {occupiedSlots.length} scheduled block{occupiedSlots.length > 1 ? 's' : ''} on this day.
-                New plans will avoid these time slots.
+                {t('braindump.occupiedNotice').replace('{count}', String(occupiedSlots.length))}
               </span>
             </div>
           )}
@@ -412,7 +426,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
               color: '#f75c6a',
               fontFamily: 'Syne',
             }}>
-              Time Conflicts Detected
+              {t('braindump.conflictDetected')}
             </span>
           </div>
 
@@ -432,7 +446,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
               }}>
                 <span style={{ fontWeight: 600 }}>{conflict.blockTitle}</span>
                 <span style={{ color: 'var(--muted)' }}> ({conflict.blockTime})</span>
-                <span style={{ color: '#f75c6a' }}> conflicts with </span>
+                <span style={{ color: '#f75c6a' }}> {locale === 'ar' ? 'يتعارض مع' : locale === 'fr' ? 'en conflit avec' : 'conflicts with'} </span>
                 <span style={{ fontWeight: 600 }}>{conflict.existingBlockTitle}</span>
                 <span style={{ color: 'var(--muted)' }}> ({conflict.existingTime})</span>
               </div>
@@ -444,7 +458,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
             color: 'var(--muted)',
             marginBottom: 8,
           }}>
-            Please choose a different date or adjust your available hours to avoid conflicts.
+            {t('braindump.conflictNote')}
           </div>
         </div>
       )}
@@ -457,7 +471,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       )}
 
       {/* Submit */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <button
           onClick={handleSubmit}
           disabled={loading || showConflictWarning || cooldown > 0}
@@ -487,19 +501,26 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
           ) : cooldown > 0 ? (
             <>
               <Timer size={18} />
-              COOLDOWN ({cooldown}s)
+              {t('braindump.cooldown') || 'COOLDOWN'} ({cooldown}s)
             </>
           ) : (
             <>
               <Sparkles size={18} />
-              {showConflictWarning ? 'Resolve Conflicts to Continue' : t('braindump.generate')}
+              {showConflictWarning ? t('braindump.resolveConflicts') || 'Resolve Conflicts to Continue' : t('braindump.generate')}
             </>
           )}
         </button>
         {cooldown > 0 && (
           <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>
-            To prevent rate limits, please wait a few seconds before generating again.
+            {t('braindump.cooldownNote') || 'To prevent rate limits, please wait a few seconds before generating again.'}
           </p>
+        )}
+        {!localStorage.getItem('dailyplan:mistral_key') && !loading && (
+           <p style={{ fontSize: 12, color: '#f75c6a', textAlign: 'center', marginTop: 4 }}>
+             {t('braindump.errorNoKey')}
+             <br />
+             <a href="/settings" style={{ color: 'var(--accent)', textDecoration: 'underline', fontWeight: 600 }}>{t('nav.settings')}</a>
+           </p>
         )}
       </div>
     </div>
@@ -547,11 +568,11 @@ const labelStyle: React.CSSProperties = {
 }
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '12px 14px',
+  width: '100%', padding: 'clamp(10px, 2.5vw, 12px) 14px',
   background: 'var(--surface)', border: '1px solid var(--border)',
-  borderRadius: 10, color: 'var(--text)', fontSize: 14,
+  borderRadius: 10, color: 'var(--text)', fontSize: 'clamp(13px, 3vw, 14px)',
   fontFamily: 'DM Sans', outline: 'none',
   transition: 'border-color 0.15s',
   colorScheme: 'dark',
-  minHeight: 46,
+  minHeight: 'clamp(44px, 10vw, 48px)',
 }

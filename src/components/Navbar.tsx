@@ -83,8 +83,8 @@ export default function Navbar() {
         direction: isRtl ? 'rtl' : 'ltr',
       }}>
         {/* Logo */}
-        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <span style={{ fontSize: 'clamp(17px, 4vw, 20px)', fontFamily: 'Syne', fontWeight: 800, letterSpacing: '-0.03em' }}>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <span style={{ fontSize: 'clamp(16px, 4vw, 20px)', fontFamily: 'Syne', fontWeight: 800, letterSpacing: '-0.03em' }}>
             <span className="gradient-text">daily</span>
             <span style={{ color: 'var(--text)' }}>plan</span>
           </span>
@@ -151,9 +151,9 @@ export default function Navbar() {
             </div>
           ) : (
             <Link href="/auth/signin" style={{
-              marginLeft: 8, padding: '7px 18px',
+              marginLeft: 8, padding: 'clamp(6px, 1.5vw, 7px) clamp(12px, 3vw, 18px)',
               background: 'linear-gradient(135deg, var(--accent), #9b8af7)',
-              borderRadius: 8, color: '#fff', fontSize: 13,
+              borderRadius: 8, color: '#fff', fontSize: 'clamp(12px, 2.5vw, 13px)',
               fontWeight: 600, textDecoration: 'none',
               fontFamily: 'Syne',
             }}>

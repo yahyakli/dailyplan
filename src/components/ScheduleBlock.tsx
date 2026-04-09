@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { Block } from '@/lib/types'
+import { useTranslations } from '@/lib/i18n/LanguageContext'
 import {
   Target,
   MessageCircle,
@@ -69,6 +70,7 @@ export default function ScheduleBlock({
   isGuest = false,
   isLocked = false,
 }: ScheduleBlockProps) {
+  const t = useTranslations()
   const icon = CATEGORY_ICONS[block.category] || <Pin size={18} strokeWidth={2} />
   const isBreak = block.category === 'break'
 
@@ -212,10 +214,10 @@ export default function ScheduleBlock({
             onMouseLeave={(e) => {
               if (!isLocked) e.currentTarget.style.background = 'transparent'
             }}
-            title={isLocked ? 'Complete previous tasks first' : 'Mark as Done'}
+            title={isLocked ? t('block.lockNotice') : t('block.markAsDone')}
           >
             <Check size={12} />
-            Mark as Done
+            {t('block.markAsDone')}
           </button>
         </div>
       )
@@ -255,7 +257,7 @@ export default function ScheduleBlock({
               }}
             >
               <RotateCcw size={10} />
-              UNDO
+              {t('block.undo')}
             </button>
           )}
         </div>
@@ -280,7 +282,7 @@ export default function ScheduleBlock({
           }}
         >
           <SkipForward size={12} />
-          Skipped
+          {t('block.skipped')}
         </div>
       )
     }
@@ -333,7 +335,7 @@ export default function ScheduleBlock({
                 }}
               >
                 <Check size={12} strokeWidth={3} />
-                Done
+                {t('block.done')}
               </button>
 
               <button
@@ -384,10 +386,10 @@ export default function ScheduleBlock({
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Track Progress
+                  {t('block.trackProgress')}
                 </span>
                 <span style={{ fontSize: 10, color: 'var(--muted)' }}>
-                  Drag or tap a preset
+                  {t('block.dragNote')}
                 </span>
               </div>
 
@@ -418,19 +420,19 @@ export default function ScheduleBlock({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Timer size={12} color="var(--muted)" />
                 <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-                  Use presets to update progress
+                  {t('block.trackNote')}
                 </span>
               </div>
 
               <div style={{ height: 1, background: 'var(--border)', opacity: 0.5, margin: '2px 0' }} />
               
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Notes
+                {t('block.notes')}
               </span>
               <textarea
                 value={notesInput}
                 onChange={(e) => handleNotesChange(e.target.value)}
-                placeholder="How's it going?"
+                placeholder={t('block.notesPlaceholder')}
                 rows={2}
                 style={{
                   width: '100%',
@@ -455,7 +457,7 @@ export default function ScheduleBlock({
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted)', opacity: 0.5 }}>
           <Lock size={12} />
-          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.02em' }}>NEXT UP</span>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.02em' }}>{t('block.nextUp')}</span>
         </div>
       )
     }
@@ -483,7 +485,7 @@ export default function ScheduleBlock({
           onMouseLeave={(e) => (e.currentTarget.style.background = CATEGORY_COLORS[block.category] + '15')}
         >
           <Play size={14} fill="currentColor" />
-          START
+          {t('block.start')}
         </button>
 
         <button

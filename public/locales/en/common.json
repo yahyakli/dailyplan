@@ -43,7 +43,16 @@
     "errorInvalidKey": "Invalid API key. Please check your key in Settings.",
     "errorRateLimit": "Too many requests. Please try again in a moment.",
     "errorModeration": "The AI cannot process this request because it violates safety guidelines.",
-    "errorInvalidSchedule": "The AI couldn't generate a proper schedule. Please provide more actionable tasks."
+    "errorInvalidSchedule": "The AI couldn't generate a proper schedule. Please provide more actionable tasks.",
+    "resolveConflicts": "Resolve Conflicts to Continue",
+    "cooldown": "COOLDOWN",
+    "cooldownNote": "To prevent rate limits, please wait a few seconds before generating again.",
+    "conflictDetected": "Time Conflicts Detected",
+    "conflictNote": "Please choose a different date or adjust your available hours to avoid conflicts.",
+    "startTimeErrorToday": "Start time must be at least 30 minutes from now if planning for today.",
+    "overview": "Schedule Overview",
+    "loading": "Loading...",
+    "occupiedNotice": "You have {count} scheduled blocks on this day. New plans will avoid these time slots."
   },
   "schedule": {
     "yourSchedule": "Your schedule",
@@ -51,7 +60,17 @@
     "newPlan": "New plan",
     "blocks": "Blocks",
     "overflow": "Overflow",
-    "highPriority": "High priority"
+    "highPriority": "High priority",
+    "planProgress": "Plan Progress",
+    "completed": "completed",
+    "inProgress": "in progress",
+    "starting": "Starting...",
+    "enableProgress": "Start Plan & Enable Progress",
+    "loadingProgress": "Loading progress...",
+    "guestNotice": "Guest Mode: Progress saved locally but won't sync across devices.",
+    "undoSuccess": "Undo successful",
+    "undoPoints": "(-{points} Points)",
+    "didNotFit": "Did not fit:"
   },
   "history": {
     "yourPlans": "Your plans",
@@ -73,7 +92,9 @@
     "topPlanners": "Top planners",
     "title": "Leaderboard",
     "subtitle": "Earn points by creating plans, maintaining streaks, and hitting perfect days.",
-    "empty": "No rankings yet. Create a plan to get on the board!"
+    "empty": "No rankings yet. Create a plan to get on the board!",
+    "pts": "pts",
+    "you": "you"
   },
   "profile": {
     "plansCreated": "Plans created",
@@ -99,7 +120,9 @@
     },
     "unlock": {
       "congrats": "Congratulations!",
-      "youEarned": "You earned a new badge!"
+      "youEarned": "You earned a new badge!",
+      "unlockedNotice": "Badge Unlocked!",
+      "tapToContinue": "Tap to continue"
     }
   },
   "settings": {
@@ -134,7 +157,10 @@
     "keyNote": "It's free, takes 2 minutes, and requires no credit card.",
     "keyPlaceholder": "your-mistral-api-key",
     "errorEmpty": "API key cannot be empty",
-    "successSaved": "API key saved! Redirecting..."
+    "successSaved": "API key saved! Redirecting...",
+    "aiConfiguration": "AI Configuration",
+    "aiDesc": "Enter your own Mistral API Key to power the daily planner.",
+    "apiRemoved": "API Key removed"
   },
   "keygate": {
     "title": "Mistral API Key Required",
@@ -142,5 +168,21 @@
     "getKey": "Get a free Mistral key →",
     "goSettings": "I have a key — go to Settings",
     "privacy": "Your key never leaves your browser — stored only in localStorage."
+  },
+  "block": {
+    "markAsDone": "Mark as Done",
+    "lockNotice": "Complete previous tasks first",
+    "undo": "UNDO",
+    "skipped": "Skipped",
+    "done": "Done",
+    "options": "Options",
+    "undoStart": "Undo start",
+    "trackProgress": "Track Progress",
+    "trackNote": "Use presets to update progress",
+    "notes": "Notes",
+    "notesPlaceholder": "How's it going?",
+    "nextUp": "NEXT UP",
+    "start": "START",
+    "dragNote": "Drag or tap a preset"
   }
 }
