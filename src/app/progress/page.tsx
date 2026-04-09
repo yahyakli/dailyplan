@@ -151,7 +151,7 @@ export default function ProgressPage() {
           </div>
         </div>
         <div style={{ ...streakItemStyle, borderLeft: '1px solid var(--border)' }}>
-          <div style={streakIconStyle}>
+          <div style={{...streakIconStyle, marginLeft: '1rem'}}>
             <Award size={24} color="var(--accent)" />
           </div>
           <div>
