@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
     const currentStatus = currentProgress?.status || 'pending'
 
     // Prevent invalid transitions (undo is handled above)
-    if (status !== 'undo' && currentStatus === 'completed') {
+    if (currentStatus === 'completed') {
       return NextResponse.json(
         { error: 'Task already completed. Use undo to revert.' },
         { status: 400 }
@@ -269,7 +269,7 @@ export async function POST(req: NextRequest) {
     // Check if all blocks are completed
     const allProgress = await getPlanProgress(userId, planId)
     const allCompleted = plan.blocks.every(
-      (_, idx) => allProgress.find((p) => p.blockIndex === idx)?.status === 'completed'
+      (block: any, idx: number) => allProgress.find((p) => p.blockIndex === idx)?.status === 'completed'
     )
 
     if (allCompleted) {

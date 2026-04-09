@@ -76,8 +76,10 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
   // Ensure endTime is at least 30 mins after startTime when manual changes occur
   useEffect(() => {
     if (!startTime || !endTime) return
-    const startMins = startTime.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m))
-    const endMins = endTime.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m))
+    const [sh, sm] = startTime.split(':').map(Number)
+    const startMins = sh * 60 + sm
+    const [eh, em] = endTime.split(':').map(Number)
+    const endMins = eh * 60 + em
     
     if (endMins <= startMins) {
       const newEnd = Math.min(startMins + 60, 1439) // +1 hour or midnight
