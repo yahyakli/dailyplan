@@ -26,9 +26,10 @@ RULES — follow these exactly:
 5. Leave a minimum 10-minute gap between every two consecutive task blocks — this gap must appear as real empty time (i.e. the next block startTime must be at least 10 min after the previous block endTime).
 6. Add at least one explicit break block (category: "break") for schedules 4+ hours long. Add lunch (30-60min) around 12:00-13:00 if it falls in the window.
 7. If tasks genuinely don't fit, place them in overflow. An honest overflow is better than an unrealistic schedule.
-8. Write one honest, specific insight about the shape of this particular day.
-9. Categories must be exactly one of: deep-work, communication, admin, personal, break
-10. Priority must be exactly one of: high, medium, low
+8. If the input is very brief (e.g. just one or two tasks), still produce a valid JSON schedule that covers those tasks within the requested window. Do not return an empty schedule or error message if there is at least one task.
+9. Write one honest, specific insight about the shape of this particular day.
+10. Categories must be exactly one of: deep-work, communication, admin, personal, break
+11. Priority must be exactly one of: high, medium, low
 
 JSON schema to return:
 {

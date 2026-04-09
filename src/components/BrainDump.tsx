@@ -1,12 +1,28 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { savePlanLocally, getGuestPlanCount } from '@/lib/storage'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
-import type { Plan, Badge } from '@/lib/types'
+import type { Plan, Badge, Block } from '@/lib/types'
 import { useTranslations, useLanguage } from '@/lib/i18n/LanguageContext'
-import { Star } from 'lucide-react'
+import { Star, AlertTriangle, Clock, Calendar, Info } from 'lucide-react'
 import BadgeUnlockToast from './BadgeUnlockToast'
+import TimeSlotVisualizer from './TimeSlotVisualizer'
+
+interface OccupiedSlot {
+  startTime: string
+  endTime: string
+  blockTitle: string
+  blockCategory: string
+}
+
+interface ConflictInfo {
+  blockTitle: string
+  blockTime: string
+  existingPlanDate: string
+  existingBlockTitle: string
+  existingTime: string
+}
 
 interface Props {
   onPlanReady: (plan: Plan) => void
@@ -16,14 +32,96 @@ interface Props {
 export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const { data: session } = useSession()
   const { locale } = useLanguage()
+  const today = new Date()
+  const localTodayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+
   const [tasks, setTasks] = useState('')
-  const [startTime, setStartTime] = useState('09:00')
-  const [endTime, setEndTime] = useState('18:00')
+  const [date, setDate] = useState(localTodayStr)
+  
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
   const [context, setContext] = useState('')
   const [error, setError] = useState('')
+
+  // Initialize and reset times based on date
+  useEffect(() => {
+    if (date === localTodayStr) {
+      const now = new Date()
+      const currentMins = now.getHours() * 60 + now.getMinutes()
+      // if past 8:30am, suggest now + 45min
+      if (currentMins >= 8 * 60 + 30) {
+        const suggested = new Date(now.getTime() + 45 * 60000)
+        let h = suggested.getHours()
+        let m = Math.ceil(suggested.getMinutes() / 30) * 30
+        if (m >= 60) {
+          h = (h + 1) % 24
+          m = 0
+        }
+        const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+        setStartTime(timeStr)
+        // Set end time to 3 hours later or 23:59
+        const endH = Math.min(h + 3, 23)
+        setEndTime(endH >= 23 ? '23:59' : `${endH.toString().padStart(2, '0')}:00`)
+      } else {
+        setStartTime('09:00')
+        setEndTime('18:00')
+      }
+    } else {
+      // For future dates, default to 9-6
+      setStartTime('09:00')
+      setEndTime('18:00')
+    }
+  }, [date, localTodayStr])
+
+  // Ensure endTime is at least 30 mins after startTime when manual changes occur
+  useEffect(() => {
+    if (!startTime || !endTime) return
+    const startMins = startTime.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m))
+    const endMins = endTime.split(':').reduce((h, m) => parseInt(h) * 60 + parseInt(m))
+    
+    if (endMins <= startMins) {
+      const newEnd = Math.min(startMins + 60, 1439) // +1 hour or midnight
+      const h = Math.floor(newEnd / 60)
+      const m = newEnd % 60
+      setEndTime(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`)
+    }
+  }, [startTime])
   const [loading, setLoading] = useState(false)
   const [newBadges, setNewBadges] = useState<Badge[]>([])
+
+  // Time slot conflict state
+  const [occupiedSlots, setOccupiedSlots] = useState<OccupiedSlot[]>([])
+  const [isLoadingSlots, setIsLoadingSlots] = useState(false)
+  const [conflicts, setConflicts] = useState<ConflictInfo[]>([])
+  const [showConflictWarning, setShowConflictWarning] = useState(false)
+  const [proposedBlocks, setProposedBlocks] = useState<Block[]>([])
+
   const t = useTranslations()
+
+  // Fetch occupied time slots when date changes
+  const fetchOccupiedSlots = useCallback(async () => {
+    if (!session?.user) {
+      setOccupiedSlots([])
+      return
+    }
+
+    setIsLoadingSlots(true)
+    try {
+      const res = await fetch(`/api/plan/slots?date=${date}&dayStart=${startTime}&dayEnd=${endTime}`)
+      if (res.ok) {
+        const data = await res.json()
+        setOccupiedSlots(data.occupiedSlots || [])
+      }
+    } catch (err) {
+      console.error('Failed to fetch time slots:', err)
+    } finally {
+      setIsLoadingSlots(false)
+    }
+  }, [date, startTime, endTime, session])
+
+  useEffect(() => {
+    fetchOccupiedSlots()
+  }, [fetchOccupiedSlots])
 
   const handleSubmit = async () => {
     if (!tasks.trim()) {
@@ -31,60 +129,91 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       return
     }
 
+    if (date === localTodayStr) {
+      const now = new Date()
+      const [h, m] = startTime.split(':').map(Number)
+      
+      const selectedTime = new Date()
+      selectedTime.setHours(h, m, 0, 0)
+
+      const nowTime = now.getTime()
+      const schedTime = selectedTime.getTime()
+      
+      // If start time is in the past OR less than 30 mins from now
+      if (schedTime < nowTime + (29 * 60000)) {
+        toast.error('Start time must be at least 30 minutes from now if planning for today.')
+        return
+      }
+    }
+
     setError('')
     setLoading(true)
     onLoading(true)
+    setShowConflictWarning(false)
+    setConflicts([])
 
     try {
-      const localDate = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD
       const res = await fetch('/api/plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tasks, startTime, endTime, context, date: localDate, locale }),
+        body: JSON.stringify({ tasks, startTime, endTime, context, date, locale }),
       })
 
       const data = await res.json()
+
+      // Handle conflict response (409)
+      if (res.status === 409) {
+        setConflicts(data.conflicts || [])
+        setShowConflictWarning(true)
+        setLoading(false)
+        onLoading(false)
+
+        // Show conflict toast with suggestion
+        toast.error(
+          <div>
+            <div style={{ fontWeight: 600, marginBottom: 4 }}>Time Conflict Detected</div>
+            <div style={{ fontSize: 13 }}>{data.suggestion || 'Please adjust your schedule'}</div>
+          </div>,
+          { duration: 8000 }
+        )
+        return
+      }
+
       if (!res.ok) {
         const errorMsg = data.error || 'Failed to generate schedule'
-        if (errorMsg.includes('401') || errorMsg.includes('Invalid') || errorMsg.includes('Unauthorized')) {
+        const lowerError = errorMsg.toLowerCase()
+
+        if (lowerError.includes('401') || lowerError.includes('invalid mistral api key') || lowerError.includes('unauthorized')) {
           toast.error(t('braindump.errorInvalidKey'))
-        } else if (errorMsg.includes('429')) {
+        } else if (lowerError.includes('429') || lowerError.includes('too many requests') || lowerError.includes('rate limit') || lowerError.includes('capacity')) {
           toast.error(t('braindump.errorRateLimit'))
+        } else if (lowerError.includes('moderation') || lowerError.includes('policy') || lowerError.includes('safety') || lowerError.includes('inappropriate')) {
+          toast.error(t('braindump.errorModeration') || 'Content violates safety guidelines.')
+        } else if (lowerError.includes('parse') || lowerError.includes('format') || lowerError.includes('syntax') || lowerError.includes('invalid schedule')) {
+          toast.error(t('braindump.errorInvalidSchedule') || 'Could not create a schedule from these tasks.')
         } else {
           toast.error(errorMsg)
         }
         throw new Error(errorMsg)
       }
 
-      const plan: Plan = data
-      savePlanLocally(plan)
-
-      // Score update — now await to capture new badges
-      if (session) {
-        try {
-          const scoreRes = await fetch('/api/score', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(plan),
-          })
-          const scoreData = await scoreRes.json()
-          if (scoreRes.ok && scoreData.newBadges?.length > 0) {
-            setNewBadges(scoreData.newBadges)
-          }
-          if (scoreRes.ok && scoreData.pointsEarned) {
-            toast.success(`+${scoreData.pointsEarned} ${t('profile.totalPoints')} ⚡`)
-          }
-        } catch (e) {
-          console.error('Score update failed:', e)
-        }
+      const plan: Plan = {
+        ...data,
+        status: 'draft',
+        blocks: data.blocks.map((b: any, i: number) => ({
+          ...b,
+          id: `block-${Date.now()}-${i}`,
+          completed: false,
+        })),
       }
+      savePlanLocally(plan)
 
       toast.success(t('braindump.successToast'))
       onPlanReady(plan)
 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong'
-      if (!message.includes('Invalid API key') && !message.includes('Too many requests')) {
+      if (!message.includes('Invalid API key') && !message.includes('Too many requests') && !message.includes('Time conflict')) {
         setError(message)
       }
     } finally {
@@ -96,9 +225,10 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const guestCount = typeof window !== 'undefined' ? getGuestPlanCount() : 0
   const showUpsell = !session && guestCount >= 3
 
+  const hasTimeOverlap = occupiedSlots.length > 0
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
       {/* Badge unlock toast */}
       {newBadges.length > 0 && (
         <BadgeUnlockToast
@@ -151,27 +281,161 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         />
       </div>
 
-      {/* Time pickers — 2 col on mobile, 3 col on sm+ */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }} className="sm:grid-cols-3">
-        <TimeInput label={t('braindump.startTime')} value={startTime} onChange={setStartTime} />
-        <TimeInput label={t('braindump.endTime')} value={endTime} onChange={setEndTime} />
-        {/* Context spans full width on mobile, 1 col on sm+ */}
-        <div style={{ gridColumn: '1 / -1' }} className="sm:col-auto">
-          <label style={labelStyle}>{t('braindump.context')}</label>
-          <input
-            type="text"
-            value={context}
-            onChange={e => setContext(e.target.value)}
-            placeholder={t('braindump.contextPlaceholder')}
-            style={inputStyle}
-            onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-            onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+      {/* Time pickers & Date */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
+          <DateInput
+            label="Date"
+            value={date}
+            onChange={setDate}
+            min={localTodayStr}
+            max={new Date(today.getTime() + 30 * 86400000).toISOString().split('T')[0]}
           />
+          <TimeInput label={t('braindump.startTime')} value={startTime} onChange={setStartTime} />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
+          <TimeInput label={t('braindump.endTime')} value={endTime} onChange={setEndTime} />
+          {/* Context */}
+          <div>
+            <label style={labelStyle}>{t('braindump.context')}</label>
+            <input
+              type="text"
+              value={context}
+              onChange={e => setContext(e.target.value)}
+              placeholder={t('braindump.contextPlaceholder')}
+              style={inputStyle}
+              onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+              onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
+      {/* Time Slot Visualizer - show when user is authenticated */}
+      {session?.user && (
+        <div style={{
+          padding: 16,
+          background: 'var(--surface)',
+          borderRadius: 12,
+          border: '1px solid var(--border)',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 12,
+          }}>
+            <Calendar size={16} color="var(--muted)" />
+            <span style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: 'var(--muted)',
+              fontFamily: 'Syne',
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+            }}>
+              Schedule Overview
+            </span>
+            {isLoadingSlots && (
+              <span style={{
+                fontSize: 11,
+                color: 'var(--accent)',
+                marginLeft: 'auto',
+              }}>
+                Loading...
+              </span>
+            )}
+          </div>
+
+          <TimeSlotVisualizer
+            date={date}
+            dayStart={startTime}
+            dayEnd={endTime}
+            occupiedSlots={occupiedSlots}
+            conflicts={conflicts}
+            showAvailableGaps={true}
+          />
+
+          {hasTimeOverlap && (
+            <div style={{
+              marginTop: 12,
+              padding: '10px 14px',
+              background: 'rgba(124, 106, 247, 0.1)',
+              borderRadius: 8,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 8,
+            }}>
+              <Info size={14} color="var(--accent)" style={{ marginTop: 2, flexShrink: 0 }} />
+              <span style={{ fontSize: 12, color: 'var(--text)' }}>
+                You have {occupiedSlots.length} scheduled block{occupiedSlots.length > 1 ? 's' : ''} on this day.
+                New plans will avoid these time slots.
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Conflict Warning */}
+      {showConflictWarning && conflicts.length > 0 && (
+        <div style={{
+          padding: '14px 16px',
+          background: 'rgba(247, 92, 106, 0.1)',
+          border: '1px solid rgba(247, 92, 106, 0.4)',
+          borderRadius: 10,
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 10,
+          }}>
+            <AlertTriangle size={18} color="#f75c6a" />
+            <span style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: '#f75c6a',
+              fontFamily: 'Syne',
+            }}>
+              Time Conflicts Detected
+            </span>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            marginBottom: 12,
+          }}>
+            {conflicts.map((conflict, idx) => (
+              <div key={idx} style={{
+                fontSize: 12,
+                color: 'var(--text)',
+                padding: '8px 12px',
+                background: 'rgba(247, 92, 106, 0.05)',
+                borderRadius: 6,
+              }}>
+                <span style={{ fontWeight: 600 }}>{conflict.blockTitle}</span>
+                <span style={{ color: 'var(--muted)' }}> ({conflict.blockTime})</span>
+                <span style={{ color: '#f75c6a' }}> conflicts with </span>
+                <span style={{ fontWeight: 600 }}>{conflict.existingBlockTitle}</span>
+                <span style={{ color: 'var(--muted)' }}> ({conflict.existingTime})</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{
+            fontSize: 12,
+            color: 'var(--muted)',
+            marginBottom: 8,
+          }}>
+            Please choose a different date or adjust your available hours to avoid conflicts.
+          </div>
+        </div>
+      )}
+
+      {/* General Error */}
+      {error && !showConflictWarning && (
         <div style={{ padding: '10px 14px', background: 'rgba(247,92,106,0.1)', border: '1px solid rgba(247,92,106,0.3)', borderRadius: 8, color: '#f75c6a', fontSize: 13 }}>
           {error}
         </div>
@@ -180,36 +444,54 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       {/* Submit */}
       <button
         onClick={handleSubmit}
-        disabled={loading}
+        disabled={loading || showConflictWarning}
         style={{
           width: '100%',
           padding: '15px 24px',
-          background: loading ? 'var(--border)' : 'linear-gradient(135deg, var(--accent), #9b8af7)',
+          background: loading || showConflictWarning ? 'var(--border)' : 'linear-gradient(135deg, var(--accent), #9b8af7)',
           border: 'none', borderRadius: 12,
           color: '#fff', fontSize: 15, fontWeight: 700,
-          fontFamily: 'Syne', cursor: loading ? 'not-allowed' : 'pointer',
+          fontFamily: 'Syne', cursor: loading || showConflictWarning ? 'not-allowed' : 'pointer',
           transition: 'opacity 0.15s, transform 0.1s',
           letterSpacing: '-0.01em',
-          boxShadow: loading ? 'none' : '0 4px 20px rgba(124,106,247,0.35)',
+          boxShadow: loading || showConflictWarning ? 'none' : '0 4px 20px rgba(124,106,247,0.35)',
         }}
-        onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
+        onMouseEnter={e => { if (!loading && !showConflictWarning) { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
         onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
       >
-        {loading ? t('braindump.generating') : t('braindump.generate')}
+        {loading ? t('braindump.generating') : showConflictWarning ? 'Resolve Conflicts to Continue' : t('braindump.generate')}
       </button>
+    </div>
+  )
+}
+
+function DateInput({ label, value, onChange, min, max }: { label: string; value: string; onChange: (v: string) => void, min: string, max: string }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <label style={labelStyle}>{label}</label>
+      <input
+        type="date"
+        value={value}
+        min={min}
+        max={max}
+        onChange={e => onChange(e.target.value)}
+        style={{ ...inputStyle, cursor: 'pointer', paddingRight: 4 }}
+        onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
+        onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+      />
     </div>
   )
 }
 
 function TimeInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
-    <div>
+    <div style={{ minWidth: 0 }}>
       <label style={labelStyle}>{label}</label>
       <input
         type="time"
         value={value}
         onChange={e => onChange(e.target.value)}
-        style={{ ...inputStyle, cursor: 'pointer' }}
+        style={{ ...inputStyle, cursor: 'pointer', paddingRight: 4 }}
         onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
         onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
       />

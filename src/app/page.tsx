@@ -1,14 +1,24 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import BrainDump from '@/components/BrainDump'
 import ScheduleView from '@/components/ScheduleView'
 import type { Plan } from '@/lib/types'
 import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { getPlanByDate } from '@/lib/storage'
 
 export default function Home() {
   const [plan, setPlan] = useState<Plan | null>(null)
   const [loading, setLoading] = useState(false)
   const t = useTranslations()
+
+  useEffect(() => {
+    // Check for today's plan in local storage on mount (for persistent Guest experience)
+    const today = new Date().toISOString().split('T')[0]
+    const localPlan = getPlanByDate(today)
+    if (localPlan) {
+      setPlan(localPlan)
+    }
+  }, [])
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(20px, 5vw, 40px) clamp(16px, 4vw, 32px)' }}>

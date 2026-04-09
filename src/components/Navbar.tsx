@@ -2,7 +2,7 @@
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useState, useEffect, useRef } from 'react'
-import { Menu, X, Calendar, History, Trophy, Medal, User, Settings } from 'lucide-react'
+import { Menu, X, Calendar, History, Trophy, Medal, User, Settings, TrendingUp } from 'lucide-react'
 import LanguageSwitcher from './LanguageSwitcher'
 import { useLanguage, useTranslations } from '@/lib/i18n/LanguageContext'
 
@@ -94,6 +94,7 @@ export default function Navbar() {
         <div style={{ alignItems: 'center', gap: 4 }} className="hidden sm:flex">
           <NavLink href="/">{t('nav.plan')}</NavLink>
           <NavLink href="/history">{t('nav.history')}</NavLink>
+          {session && <NavLink href="/progress">{t('nav.progress') || 'Progress'}</NavLink>}
           {!session && <NavLink href="/settings">{t('nav.settings')}</NavLink>}
 
           <LanguageSwitcher />
@@ -127,6 +128,7 @@ export default function Navbar() {
                   boxShadow: isDark ? '0 8px 40px rgba(0,0,0,0.5)' : '0 8px 30px rgba(0,0,0,0.12)',
                 }}>
                   <DropdownLink href="/profile" onClick={() => setProfileMenuOpen(false)}>{t('nav.profile')}</DropdownLink>
+                  <DropdownLink href="/progress" onClick={() => setProfileMenuOpen(false)}>{t('nav.progress') || 'Progress'}</DropdownLink>
                   <DropdownLink href="/badges" onClick={() => setProfileMenuOpen(false)}>{t('nav.badges') || 'Badges'}</DropdownLink>
                   <DropdownLink href="/leaderboard" onClick={() => setProfileMenuOpen(false)}>{t('nav.leaderboard')}</DropdownLink>
                   <DropdownLink href="/settings" onClick={() => setProfileMenuOpen(false)}>{t('nav.settings')}</DropdownLink>
@@ -268,6 +270,7 @@ export default function Navbar() {
               </>
             ) : session ? (
               <>
+                <MobileNavLink href="/progress" onClick={() => setMobileMenuOpen(false)} icon={<TrendingUp size={18} />}>{t('nav.progress') || 'Progress'}</MobileNavLink>
                 <MobileNavLink href="/leaderboard" onClick={() => setMobileMenuOpen(false)} icon={<Trophy size={18} />}>{t('nav.leaderboard')}</MobileNavLink>
                 <MobileNavLink href="/badges" onClick={() => setMobileMenuOpen(false)} icon={<Medal size={18} />}>{t('nav.badges') || 'Badges'}</MobileNavLink>
                 <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)} icon={<User size={18} />}>{t('nav.profile')}</MobileNavLink>

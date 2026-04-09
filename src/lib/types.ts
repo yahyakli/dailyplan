@@ -4,12 +4,16 @@ export type BlockCategory = 'deep-work' | 'communication' | 'admin' | 'personal'
 export type Priority = 'high' | 'medium' | 'low'
 
 export interface Block {
+  id?: string
   startTime: string   // HH:MM
   endTime: string     // HH:MM
   title: string
   category: BlockCategory
   priority: Priority
   notes?: string
+  completed?: boolean
+  status?: string              // For Guest persistence (pending, in_progress, completed, skipped)
+  progressPercentage?: number  // For Guest persistence (0-100)
 }
 
 export interface Plan {
@@ -19,6 +23,7 @@ export interface Plan {
   insight: string
   rawInput?: string
   createdAt?: string
+  status?: 'draft' | 'active' | 'completed'
 }
 
 // ─── User & Auth Types ────────────────────────────────────────────────────────

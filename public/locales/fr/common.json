@@ -2,6 +2,7 @@
   "nav": {
     "plan": "Plan",
     "history": "Historique",
+    "progress": "Progrès",
     "leaderboard": "Classement",
     "badges": "Badges",
     "profile": "Profil",
@@ -40,7 +41,9 @@
     "errorNoKey": "Aucune clé API Mistral trouvée. Allez dans Paramètres pour en ajouter une.",
     "errorNoTasks": "Veuillez d'abord saisir des tâches.",
     "errorInvalidKey": "Clé API invalide. Vérifiez votre clé dans Paramètres.",
-    "errorRateLimit": "Trop de requêtes. Veuillez réessayer dans un moment."
+    "errorRateLimit": "Trop de requêtes. Veuillez réessayer dans un moment.",
+    "errorModeration": "L'IA ne peut pas traiter cette demande car elle enfreint les consignes de sécurité.",
+    "errorInvalidSchedule": "L'IA n'a pas pu générer un planning correct. Veuillez fournir des tâches plus concrètes."
   },
   "schedule": {
     "yourSchedule": "Votre planning",

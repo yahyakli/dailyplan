@@ -2,6 +2,7 @@
   "nav": {
     "plan": "Plan",
     "history": "History",
+    "progress": "Progress",
     "leaderboard": "Leaderboard",
     "badges": "Badges",
     "profile": "Profile",
@@ -40,7 +41,9 @@
     "errorNoKey": "No Mistral API key found. Go to Settings to add one.",
     "errorNoTasks": "Please enter some tasks first.",
     "errorInvalidKey": "Invalid API key. Please check your key in Settings.",
-    "errorRateLimit": "Too many requests. Please try again in a moment."
+    "errorRateLimit": "Too many requests. Please try again in a moment.",
+    "errorModeration": "The AI cannot process this request because it violates safety guidelines.",
+    "errorInvalidSchedule": "The AI couldn't generate a proper schedule. Please provide more actionable tasks."
   },
   "schedule": {
     "yourSchedule": "Your schedule",
