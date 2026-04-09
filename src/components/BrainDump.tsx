@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import type { Plan, Badge, Block } from '@/lib/types'
 import { useTranslations, useLanguage } from '@/lib/i18n/LanguageContext'
-import { Star, AlertTriangle, Clock, Calendar, Info } from 'lucide-react'
+import { Star, AlertTriangle, Clock, Calendar, Info, Sparkles, Timer } from 'lucide-react'
 import BadgeUnlockToast from './BadgeUnlockToast'
 import TimeSlotVisualizer from './TimeSlotVisualizer'
 
@@ -41,6 +41,8 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
   const [context, setContext] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
   const [error, setError] = useState('')
 
   // Initialize and reset times based on date
@@ -88,7 +90,6 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       setEndTime(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`)
     }
   }, [startTime])
-  const [loading, setLoading] = useState(false)
   const [newBadges, setNewBadges] = useState<Badge[]>([])
 
   // Time slot conflict state
@@ -221,6 +222,18 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
     } finally {
       setLoading(false)
       onLoading(false)
+      
+      // Implement a 10-second cooldown to prevent spamming the Mistral API
+      setCooldown(10)
+      const timer = setInterval(() => {
+        setCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer)
+            return 0
+          }
+          return prev - 1
+        })
+      }, 1000)
     }
   }
 
@@ -444,25 +457,51 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       )}
 
       {/* Submit */}
-      <button
-        onClick={handleSubmit}
-        disabled={loading || showConflictWarning}
-        style={{
-          width: '100%',
-          padding: '15px 24px',
-          background: loading || showConflictWarning ? 'var(--border)' : 'linear-gradient(135deg, var(--accent), #9b8af7)',
-          border: 'none', borderRadius: 12,
-          color: '#fff', fontSize: 15, fontWeight: 700,
-          fontFamily: 'Syne', cursor: loading || showConflictWarning ? 'not-allowed' : 'pointer',
-          transition: 'opacity 0.15s, transform 0.1s',
-          letterSpacing: '-0.01em',
-          boxShadow: loading || showConflictWarning ? 'none' : '0 4px 20px rgba(124,106,247,0.35)',
-        }}
-        onMouseEnter={e => { if (!loading && !showConflictWarning) { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'translateY(-1px)' } }}
-        onMouseLeave={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'translateY(0)' }}
-      >
-        {loading ? t('braindump.generating') : showConflictWarning ? 'Resolve Conflicts to Continue' : t('braindump.generate')}
-      </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <button
+          onClick={handleSubmit}
+          disabled={loading || showConflictWarning || cooldown > 0}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: loading || showConflictWarning || cooldown > 0 ? 'var(--border)' : 'linear-gradient(135deg, var(--accent), #9b8af7)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 12,
+            fontSize: 15,
+            fontWeight: 700,
+            cursor: loading || showConflictWarning || cooldown > 0 ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s',
+            fontFamily: 'Syne',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            opacity: loading || showConflictWarning || cooldown > 0 ? 0.7 : 1,
+          }}
+        >
+          {loading ? (
+            <>
+              {t('braindump.generating') || 'Generating...'}
+            </>
+          ) : cooldown > 0 ? (
+            <>
+              <Timer size={18} />
+              COOLDOWN ({cooldown}s)
+            </>
+          ) : (
+            <>
+              <Sparkles size={18} />
+              {showConflictWarning ? 'Resolve Conflicts to Continue' : t('braindump.generate')}
+            </>
+          )}
+        </button>
+        {cooldown > 0 && (
+          <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>
+            To prevent rate limits, please wait a few seconds before generating again.
+          </p>
+        )}
+      </div>
     </div>
   )
 }

@@ -57,37 +57,49 @@ export async function POST(req: NextRequest) {
     )
 
     let response: Response | null = null
-    const maxRetries = 3
+    const maxRetries = 5
     for (let i = 0; i < maxRetries; i++) {
-      response = await fetch('https://api.mistral.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'mistral-small-latest',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 4096,
-          response_format: { type: 'json_object' },
-        }),
-      })
+      try {
+        response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'mistral-small-latest',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: userPrompt },
+            ],
+            temperature: 0.7,
+            max_tokens: 4096,
+            response_format: { type: 'json_object' },
+          }),
+        })
 
-      if (response.ok) break
-      
-      // If rate limited, wait and retry
-      if (response.status === 429 && i < maxRetries - 1) {
-        const waitTime = Math.pow(2, i) * 1000 // 1s, 2s, 4s...
-        console.warn(`Mistral rate limit hit. Retrying in ${waitTime}ms...`)
-        await new Promise(resolve => setTimeout(resolve, waitTime))
-        continue
+        if (response.ok) break
+        
+        // If rate limited or service busy, wait and retry
+        if ((response.status === 429 || response.status === 503) && i < maxRetries - 1) {
+          // Exponential backoff with jitter: 2s, 4s, 8s, 16s... plus random jitter
+          const baseDelay = Math.pow(2, i + 1) * 1000 
+          const jitter = Math.random() * 1000
+          const waitTime = baseDelay + jitter
+          
+          console.warn(`Mistral rate limit/busy (Status: ${response.status}). Retry ${i+1}/${maxRetries} in ${Math.round(waitTime)}ms...`)
+          await new Promise(resolve => setTimeout(resolve, waitTime))
+          continue
+        }
+      } catch (err) {
+        console.error(`Mistral fetch attempt ${i+1} failed:`, err)
+        if (i < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, 2000))
+          continue
+        }
       }
       
-      break // Other errors or no mode retries left
+      break // Other errors or no more retries left
     }
 
     if (!response || !response.ok) {

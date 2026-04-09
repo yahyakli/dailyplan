@@ -110,7 +110,7 @@ export default function ScheduleView({ plan, onReset }: Props) {
 
     const interval = setInterval(() => {
       loadProgress()
-    }, 5000) // Poll every 5 seconds
+    }, 12000) // Poll every 12 seconds
 
     return () => clearInterval(interval)
   }, [loadProgress, currentPlan.status])
