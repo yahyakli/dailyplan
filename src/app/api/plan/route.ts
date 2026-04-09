@@ -14,6 +14,7 @@ import {
   checkTimeConflicts,
   createTimeSlots,
   getOccupiedTimeSlots,
+  deleteTimeSlotsForPlan,
 } from '@/lib/timeSlots.server'
 import type { Block } from '@/lib/types'
 
@@ -230,13 +231,30 @@ export async function POST(req: NextRequest) {
       await connectDB()
       const user = await User.findOne({ email: session!.user!.email })
       if (user) {
-        const savedPlan = await Plan.findOneAndUpdate(
-          { userId: user._id, date: plan.date },
-          { ...plan, userId: user._id, rawInput: tasks },
-          { upsert: true, new: true }
-        )
+        // Archive existing plans for this date
+        const existingPlans = await Plan.find({ userId: user._id, date: plan.date, isArchived: false })
+        
+        if (existingPlans.length > 0) {
+          await Plan.updateMany(
+            { userId: user._id, date: plan.date, isArchived: false },
+            { isArchived: true }
+          )
+          
+          // Delete time slots for archived plans to avoid conflicts with the new one
+          for (const oldPlan of existingPlans) {
+            await deleteTimeSlotsForPlan(oldPlan._id.toString())
+          }
+        }
 
-        // Create time slots for the plan blocks
+        // Create new plan
+        const savedPlan = await Plan.create({
+          ...plan,
+          userId: user._id,
+          rawInput: tasks,
+          isArchived: false
+        })
+
+        // Create time slots for the new plan blocks
         if (savedPlan && savedPlan.blocks.length > 0) {
           await createTimeSlots(
             userId,

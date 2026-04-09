@@ -54,7 +54,7 @@ export default function HistoryPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {plans.map((plan, i) => (
               <HistoryCard
-                key={plan.date}
+                key={plan._id || plan.createdAt || `${plan.date}-${i}`}
                 plan={plan}
                 index={i}
                 onClick={() => setSelected(plan)}

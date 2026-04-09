@@ -6,7 +6,8 @@ const KEY_GUEST_PLAN_COUNT = 'dailyplan:guestcount'
 // ─── Plans (guest localStorage) ───────────────────────────────────────────────
 
 export function savePlanLocally(plan: Plan): void {
-  const key = `${KEY_PLAN_PREFIX}${plan.date}`
+  const timestamp = new Date().getTime()
+  const key = `${KEY_PLAN_PREFIX}${plan.date}:${timestamp}`
   localStorage.setItem(key, JSON.stringify({ ...plan, createdAt: new Date().toISOString() }))
 
   // Track guest plan count for upsell prompt
@@ -15,7 +16,14 @@ export function savePlanLocally(plan: Plan): void {
 }
 
 export function getPlanByDate(date: string): Plan | null {
-  const raw = localStorage.getItem(`${KEY_PLAN_PREFIX}${date}`)
+  const keys = Object.keys(localStorage)
+    .filter(k => k.startsWith(`${KEY_PLAN_PREFIX}${date}`))
+    .sort()
+    .reverse()
+  
+  if (keys.length === 0) return null
+  
+  const raw = localStorage.getItem(keys[0])
   if (!raw) return null
   try { return JSON.parse(raw) } catch { return null }
 }

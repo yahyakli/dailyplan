@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Block } from '@/lib/types'
 import {
   Target,
@@ -82,24 +82,38 @@ export default function ScheduleBlock({
   const [showOptions, setShowOptions] = useState(false)
   const [notesInput, setNotesInput] = useState(progress?.notes || '')
   const [localPercentage, setLocalPercentage] = useState(completionPercentage)
+  const isDirty = useRef(false)
 
   // Sync local percentage with prop
   useEffect(() => {
     setLocalPercentage(completionPercentage)
   }, [completionPercentage])
 
-  // Auto-save notes after debounce - only when plan is active
+  // Sync notes with prop if user hasn't edited them yet
   useEffect(() => {
-    if (!isActive) return
+    if (!isDirty.current && progress?.notes !== undefined && progress.notes !== notesInput) {
+      setNotesInput(progress.notes || '')
+    }
+  }, [progress?.notes, notesInput])
+
+  // Auto-save notes after debounce - only when plan is active and modified by user
+  useEffect(() => {
+    if (!isActive || !isDirty.current) return
 
     const currentNotes = progress?.notes || ''
     if (notesInput !== currentNotes) {
       const timeout = setTimeout(() => {
         onProgressUpdate?.({ notes: notesInput })
+        isDirty.current = false // Reset dirty flag after saving
       }, 1000)
       return () => clearTimeout(timeout)
     }
   }, [notesInput, progress?.notes, onProgressUpdate, isActive])
+
+  const handleNotesChange = (val: string) => {
+    setNotesInput(val)
+    isDirty.current = true
+  }
 
   const handleStartTask = () => {
     onProgressUpdate?.({
@@ -415,7 +429,7 @@ export default function ScheduleBlock({
               </span>
               <textarea
                 value={notesInput}
-                onChange={(e) => setNotesInput(e.target.value)}
+                onChange={(e) => handleNotesChange(e.target.value)}
                 placeholder="How's it going?"
                 rows={2}
                 style={{

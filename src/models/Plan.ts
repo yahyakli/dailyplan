@@ -17,6 +17,7 @@ export interface IPlan extends Document {
   overflow: string[]
   insight: string
   rawInput: string
+  isArchived: boolean
   createdAt: Date
 }
 
@@ -36,10 +37,11 @@ const PlanSchema = new Schema<IPlan>({
   overflow: [String],
   insight:  { type: String },
   rawInput: { type: String },
+  isArchived: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 })
 
-// Compound index: one plan per user per day
-PlanSchema.index({ userId: 1, date: 1 }, { unique: true })
+// Index for efficient plan retrieval by user and date
+PlanSchema.index({ userId: 1, date: 1, isArchived: 1 })
 
 export const Plan = models.Plan || model<IPlan>('Plan', PlanSchema)

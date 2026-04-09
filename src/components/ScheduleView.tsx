@@ -154,12 +154,10 @@ export default function ScheduleView({ plan, onReset }: Props) {
     }
   }
 
-  const handleProgressUpdate = async (
+  const handleProgressUpdate = useCallback(async (
     blockIndex: number,
     updates: Partial<BlockProgressInfo>
   ) => {
-    const block = currentPlan.blocks[blockIndex]
-
     // Optimistically update UI
     setBlockProgress((prev) => ({
       ...prev,
@@ -195,16 +193,18 @@ export default function ScheduleView({ plan, onReset }: Props) {
     if (currentPlan.status === 'draft' || !session) return
 
     try {
+      const currentStatus = updates.status || blockProgressRef.current[blockIndex]?.status || 'pending'
+      const currentPercentage = updates.completionPercentage ?? blockProgressRef.current[blockIndex]?.completionPercentage ?? 0
+
       const res = await fetch('/api/plan/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planDate: currentPlan.date,
           blockIndex,
-          status: updates.status || blockProgress[blockIndex]?.status,
-          completionPercentage:
-            updates.completionPercentage ?? blockProgress[blockIndex]?.completionPercentage,
-          notes: updates.notes,
+          status: currentStatus,
+          completionPercentage: currentPercentage,
+          notes: updates.notes ?? blockProgressRef.current[blockIndex]?.notes,
         }),
       })
 
@@ -238,10 +238,10 @@ export default function ScheduleView({ plan, onReset }: Props) {
       console.error('Progress update failed:', err)
       loadProgress()
     }
-  }
+  }, [currentPlan.date, currentPlan.blocks, currentPlan.status, session, loadProgress])
 
-  const handleUndo = async (blockIndex: number) => {
-    const currentInfo = blockProgress[blockIndex]
+  const handleUndo = useCallback(async (blockIndex: number) => {
+    const currentInfo = blockProgressRef.current[blockIndex]
     const isUndoingInprogress = currentInfo?.status === 'in_progress'
 
     try {
@@ -298,7 +298,8 @@ export default function ScheduleView({ plan, onReset }: Props) {
       console.error('Undo failed:', err)
       loadProgress()
     }
-  }
+  }, [currentPlan.date, currentPlan.blocks, currentPlan.status, session, loadProgress])
+
 
   // Calculate plan progress stats
   const completedCount = Object.values(blockProgress).filter((p) => p.status === 'completed').length

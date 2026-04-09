@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Find the plan
-    const plan = await Plan.findOne({ userId: user._id, date: planDate })
+    const plan = await Plan.findOne({ userId: user._id, date: planDate, isArchived: false })
     if (!plan) {
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
     }
@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Find the plan
-    const plan = await Plan.findOne({ userId: user._id, date: planDate })
+    const plan = await Plan.findOne({ userId: user._id, date: planDate, isArchived: false })
     if (!plan) {
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
     }
@@ -377,7 +377,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    const plan = await Plan.findOne({ userId: user._id, date: planDate })
+    const plan = await Plan.findOne({ userId: user._id, date: planDate, isArchived: false })
     if (!plan) {
       return NextResponse.json({ error: 'Plan not found' }, { status: 404 })
     }
