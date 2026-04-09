@@ -8,6 +8,9 @@ dailyplan is a modern, AI-powered scheduling application that solves the "blank 
 ![Next.js](https://img.shields.io/badge/Next.js-16.2.1-black.svg)
 ![React](https://img.shields.io/badge/React-19.2.4-61dafb.svg)
 
+## 🌐 Live Demo
+👉 https://dailyplan-org.vercel.app
+
 ---
 
 ## ✨ Key Features
