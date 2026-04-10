@@ -18,17 +18,24 @@ import {
 } from '@/lib/timeSlots.server'
 import type { Block } from '@/lib/types'
 
+import { getAIProvider } from '@/lib/ai'
+
 export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
-    const { tasks, startTime, endTime, context, date, locale, apiKey: userApiKey } = await req.json()
+    const { tasks, startTime, endTime, context, date, locale } = await req.json()
 
-    const apiKey = userApiKey || process.env.MISTRAL_API_KEY
+    // Default to Groq
+    const providerId = 'groq'
+    const provider = getAIProvider(providerId)
+
+    const apiKey = process.env.GROQ_API_KEY
     if (!apiKey) {
+      console.error('GROQ_API_KEY is not configured on the server.')
       return NextResponse.json(
-        { error: 'No Mistral API key provided. Please add one in Settings.' },
-        { status: 401 }
+        { error: 'AI generation is currently unavailable. Please contact the administrator.' },
+        { status: 503 }
       )
     }
 
@@ -47,7 +54,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Build prompt and call Mistral
+    // Build prompt
     const { systemPrompt, userPrompt } = buildPrompt(
       tasks,
       startTime,
@@ -57,76 +64,25 @@ export async function POST(req: NextRequest) {
       locale
     )
 
-    let response: Response | null = null
-    const maxRetries = 5
-    for (let i = 0; i < maxRetries; i++) {
-      try {
-        response = await fetch('https://api.mistral.ai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: 'mistral-small-latest',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: userPrompt },
-            ],
-            temperature: 0.7,
-            max_tokens: 4096,
-            response_format: { type: 'json_object' },
-          }),
-        })
+    let aiResponse;
+    try {
+      aiResponse = await provider.generateResponse({ systemPrompt, userPrompt }, apiKey)
+    } catch (err: any) {
+      console.error(`${provider.name} API error:`, err)
+      let message = err.message || `${provider.name} API error`
 
-        if (response.ok) break
-        
-        // If rate limited or service busy, wait and retry
-        if ((response.status === 429 || response.status === 503) && i < maxRetries - 1) {
-          // Exponential backoff with jitter: 2s, 4s, 8s, 16s... plus random jitter
-          const baseDelay = Math.pow(2, i + 1) * 1000 
-          const jitter = Math.random() * 1000
-          const waitTime = baseDelay + jitter
-          
-          console.warn(`Mistral rate limit/busy (Status: ${response.status}). Retry ${i+1}/${maxRetries} in ${Math.round(waitTime)}ms...`)
-          await new Promise(resolve => setTimeout(resolve, waitTime))
-          continue
-        }
-      } catch (err) {
-        console.error(`Mistral fetch attempt ${i+1} failed:`, err)
-        if (i < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, 2000))
-          continue
-        }
-      }
-      
-      break // Other errors or no more retries left
-    }
-
-    if (!response || !response.ok) {
-      const error = response ? await response.json() : { message: 'Network error or timeout' }
-      let message = error.message || 'Mistral API error'
-
-      if (response?.status === 401) {
-        message = 'Invalid Mistral API key configured on the server.'
-      } else if (response?.status === 429) {
+      if (message.includes('401') || message.toLowerCase().includes('invalid')) {
+        message = `Invalid ${provider.name} API key configured.`
+      } else if (message.includes('429')) {
         message = 'Rate limit exceeded. Please try again in a moment.'
-      } else if (response?.status === 422 || response?.status === 400) {
-        if (
-          message.toLowerCase().includes('violates') ||
-          message.toLowerCase().includes('policy') ||
-          message.toLowerCase().includes('safety')
-        ) {
-          message = 'Moderation policy violation.'
-        }
+      } else if (message.toLowerCase().includes('moderation') || message.toLowerCase().includes('policy')) {
+        message = 'Moderation policy violation.'
       }
 
-      return NextResponse.json({ error: message }, { status: response?.status || 500 })
+      return NextResponse.json({ error: message }, { status: 500 })
     }
 
-    const data = await response.json()
-    const raw = data.choices[0].message.content
-    const plan = parseSchedule(raw)
+    const plan = parseSchedule(aiResponse.content)
 
     // Validate blocks have valid time ranges
     for (const block of plan.blocks) {

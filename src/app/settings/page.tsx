@@ -19,17 +19,7 @@ export default function SettingsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [deleting, setDeleting] = useState(false)
 
-  const [mistralKey, setMistralKey] = useState('')
-  const [keySaved, setKeySaved] = useState(false)
 
-  useEffect(() => {
-    if (session?.user?.name) {
-      setName(session.user.name)
-    }
-    // Load API key from local storage
-    const savedKey = localStorage.getItem('dailyplan:mistral_key')
-    if (savedKey) setMistralKey(savedKey)
-  }, [session])
 
   const handleSave = async () => {
     if (!name.trim()) return
@@ -84,22 +74,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSaveKey = () => {
-    if (!mistralKey.trim()) {
-      toast.error(t('settings.errorEmpty'))
-      return
-    }
-    localStorage.setItem('dailyplan:mistral_key', mistralKey.trim())
-    setKeySaved(true)
-    toast.success(t('settings.successSaved'))
-    setTimeout(() => setKeySaved(false), 3000)
-  }
-
-  const handleRemoveKey = () => {
-    localStorage.removeItem('dailyplan:mistral_key')
-    setMistralKey('')
-    toast.info(t('settings.apiRemoved'))
-  }
 
   return (
     <div style={{ maxWidth: 560, margin: '0 auto', padding: 'clamp(24px, 5vw, 48px)' }} className="px-4 sm:px-6">
@@ -117,74 +91,6 @@ export default function SettingsPage() {
           <ThemeToggle />
         </div>
 
-        {/* AI Config Section */}
-        <div className="glass" style={{ borderRadius: 14, padding: 'clamp(20px, 4vw, 28px)', marginBottom: 24 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', marginBottom: 16 }}>
-            {t('settings.aiConfiguration')}
-          </label>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }}>
-              {t('settings.aiDesc')} 
-              {t('settings.keyNote')}
-            </p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted)' }}>{t('settings.apiKeyLabel')}</label>
-              <div style={{ display: 'flex', gap: 8 }} className="xs:flex-col sm:flex-row">
-                <input
-                  type="password"
-                  value={mistralKey}
-                  onChange={e => setMistralKey(e.target.value)}
-                  placeholder={t('settings.keyPlaceholder')}
-                  style={{
-                    flex: 1, padding: '11px 14px',
-                    background: 'var(--bg)', border: '1px solid var(--border)',
-                    borderRadius: 8, color: 'var(--text)', fontSize: 14,
-                    outline: 'none', transition: 'border-color 0.15s',
-                  }}
-                  onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-                  onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-                />
-                <button 
-                  onClick={handleSaveKey} 
-                  disabled={keySaved}
-                  style={{
-                    padding: '11px 20px',
-                    background: keySaved ? 'var(--surface)' : 'linear-gradient(135deg, var(--accent), #9b8af7)',
-                    border: 'none',
-                    borderRadius: 8, 
-                    color: '#fff',
-                    fontFamily: 'Syne', fontWeight: 700, fontSize: 14,
-                    cursor: keySaved ? 'not-allowed' : 'pointer', 
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {keySaved ? t('settings.saved') : t('settings.save')}
-                </button>
-              </div>
-            </div>
-            
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <a 
-                href="https://console.mistral.ai/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}
-              >
-                {t('settings.getKey')}
-              </a>
-              {mistralKey && (
-                <button 
-                  onClick={handleRemoveKey}
-                  style={{ background: 'none', border: 'none', color: '#ff4d4d', fontSize: 12, cursor: 'pointer', fontWeight: 600, padding: 0 }}
-                >
-                  {t('settings.removeKey')}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
 
         {/* Account Info Section */}
         {session && (

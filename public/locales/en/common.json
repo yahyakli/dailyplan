@@ -38,9 +38,9 @@
     "upsell": "You've made {count} plans! Sign up to save your history, track streaks, and join the leaderboard.",
     "signupFree": "Sign up free →",
     "successToast": "Schedule generated! 🎉",
-    "errorNoKey": "No Mistral API key found. Go to Settings to add one.",
+
     "errorNoTasks": "Please enter some tasks first.",
-    "errorInvalidKey": "Invalid API key. Please check your key in Settings.",
+    "errorInvalidKey": "AI generation is currently unavailable. Please try again later or contact the administrator.",
     "errorRateLimit": "Too many requests. Please try again in a moment.",
     "errorModeration": "The AI cannot process this request because it violates safety guidelines.",
     "errorInvalidSchedule": "The AI couldn't generate a proper schedule. Please provide more actionable tasks.",
@@ -147,28 +147,10 @@
     "deleteAccount": "Delete Account",
     "deleteConfirmation": "Type DELETE to confirm your account deletion. This action is permanent and cannot be undone.",
     "deletePlaceholder": "Type DELETE",
-    "deleting": "Deleting...",
-    "apiKeyLabel": "Mistral API Key",
-    "save": "Save",
-    "saved": "✓ Saved",
-    "removeKey": "Remove key",
-    "noKey": "Don't have a key?",
-    "getKey": "Get one free at Mistral →",
-    "keyNote": "It's free, takes 2 minutes, and requires no credit card.",
-    "keyPlaceholder": "your-mistral-api-key",
-    "errorEmpty": "API key cannot be empty",
-    "successSaved": "API key saved! Redirecting...",
-    "aiConfiguration": "AI Configuration",
-    "aiDesc": "Enter your own Mistral API Key to power the daily planner.",
-    "apiRemoved": "API Key removed"
+    "deleting": "Deleting..."
+
   },
-  "keygate": {
-    "title": "Mistral API Key Required",
-    "description": "DailyPlan uses your own free Mistral key — it never touches our servers and stays only in your browser.",
-    "getKey": "Get a free Mistral key →",
-    "goSettings": "I have a key — go to Settings",
-    "privacy": "Your key never leaves your browser — stored only in localStorage."
-  },
+
   "block": {
     "markAsDone": "Mark as Done",
     "lockNotice": "Complete previous tasks first",

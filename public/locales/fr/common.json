@@ -38,9 +38,9 @@
     "upsell": "Vous avez créé {count} plans ! Inscrivez-vous pour sauvegarder l'historique, suivre vos séries et rejoindre le classement.",
     "signupFree": "S'inscrire gratuitement →",
     "successToast": "Planning généré ! 🎉",
-    "errorNoKey": "Aucune clé API Mistral trouvée. Allez dans Paramètres pour en ajouter une.",
+
     "errorNoTasks": "Veuillez d'abord saisir des tâches.",
-    "errorInvalidKey": "Clé API invalide. Vérifiez votre clé dans Paramètres.",
+    "errorInvalidKey": "La génération par IA est actuellement indisponible. Veuillez réessayer plus tard ou contacter l'administrateur.",
     "errorRateLimit": "Trop de requêtes. Veuillez réessayer dans un moment.",
     "errorModeration": "L'IA ne peut pas traiter cette demande car elle enfreint les consignes de sécurité.",
     "errorInvalidSchedule": "L'IA n'a pas pu générer un planning correct. Veuillez fournir des tâches plus concrètes.",
@@ -147,28 +147,10 @@
     "deleteAccount": "Supprimer le compte",
     "deleteConfirmation": "Tapez DELETE pour confirmer la suppression de votre compte. Cette action est irréversible.",
     "deletePlaceholder": "Tapez DELETE",
-    "deleting": "Suppression...",
-    "apiKeyLabel": "Clé API Mistral",
-    "save": "Enregistrer",
-    "saved": "✓ Enregistré",
-    "removeKey": "Supprimer la clé",
-    "noKey": "Vous n'avez pas de clé ?",
-    "getKey": "Obtenez-en une gratuitement chez Mistral →",
-    "keyNote": "C'est gratuit, ça prend 2 minutes et ne nécessite pas de carte bancaire.",
-    "keyPlaceholder": "votre-clé-api-mistral",
-    "errorEmpty": "La clé API ne peut pas être vide",
-    "successSaved": "Clé API enregistrée ! Redirection...",
-    "aiConfiguration": "Configuration IA",
-    "aiDesc": "Entrez votre propre clé API Mistral pour alimenter le planificateur quotidien.",
-    "apiRemoved": "Clé API supprimée"
+    "deleting": "Suppression..."
+
   },
-  "keygate": {
-    "title": "Clé API Mistral requise",
-    "description": "DailyPlan utilise votre propre clé Mistral gratuite — elle ne touche jamais nos serveurs et reste uniquement dans votre navigateur.",
-    "getKey": "Obtenir une clé Mistral gratuite →",
-    "goSettings": "J'ai une clé — aller aux Paramètres",
-    "privacy": "Votre clé ne quitte jamais votre navigateur — stockée uniquement dans localStorage."
-  },
+
   "block": {
     "markAsDone": "Marquer comme fait",
     "lockNotice": "Terminez d'abord les tâches précédentes",

@@ -132,12 +132,6 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       return
     }
 
-    const savedKey = localStorage.getItem('dailyplan:mistral_key')
-    if (!savedKey && !process.env.NEXT_PUBLIC_ALLOW_NO_KEY) {
-      toast.error(t('braindump.errorNoKey'))
-      setError(t('braindump.errorNoKey'))
-      return
-    }
 
     if (date === localTodayStr) {
       const now = new Date()
@@ -172,8 +166,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
           endTime, 
           context, 
           date, 
-          locale,
-          apiKey: savedKey 
+          locale
         }),
       })
 
@@ -201,7 +194,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         const errorMsg = data.error || (t('common.error') || 'Failed to generate schedule')
         const lowerError = errorMsg.toLowerCase()
 
-        if (lowerError.includes('401') || lowerError.includes('invalid mistral api key') || lowerError.includes('unauthorized')) {
+        if (lowerError.includes('401') || lowerError.includes('invalid') || lowerError.includes('unauthorized') || lowerError.includes('unavailable')) {
           toast.error(t('braindump.errorInvalidKey'))
         } else if (lowerError.includes('429') || lowerError.includes('too many requests') || lowerError.includes('rate limit') || lowerError.includes('capacity')) {
           toast.error(t('braindump.errorRateLimit'))
@@ -238,7 +231,7 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       setLoading(false)
       onLoading(false)
       
-      // Implement a 10-second cooldown to prevent spamming the Mistral API
+      // Implement a 10-second cooldown to prevent spamming the AI API
       setCooldown(10)
       const timer = setInterval(() => {
         setCooldown((prev) => {
@@ -514,13 +507,6 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
           <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>
             {t('braindump.cooldownNote') || 'To prevent rate limits, please wait a few seconds before generating again.'}
           </p>
-        )}
-        {!localStorage.getItem('dailyplan:mistral_key') && !loading && (
-           <p style={{ fontSize: 12, color: '#f75c6a', textAlign: 'center', marginTop: 4 }}>
-             {t('braindump.errorNoKey')}
-             <br />
-             <a href="/settings" style={{ color: 'var(--accent)', textDecoration: 'underline', fontWeight: 600 }}>{t('nav.settings')}</a>
-           </p>
         )}
       </div>
     </div>

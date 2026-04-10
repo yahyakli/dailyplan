@@ -1,6 +1,7 @@
 'use client'
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { Menu, X, Calendar, History, Trophy, Medal, User, Settings, TrendingUp } from 'lucide-react'
 import LanguageSwitcher from './LanguageSwitcher'
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [isDark, setIsDark] = useState(true)
   const { isRtl } = useLanguage()
   const t = useTranslations()
+  const pathname = usePathname()
 
   useEffect(() => {
     const darkModeActive = document.documentElement.classList.contains('dark')
@@ -92,10 +94,10 @@ export default function Navbar() {
 
         {/* Desktop Nav links */}
         <div style={{ alignItems: 'center', gap: 4 }} className="hidden sm:flex">
-          <NavLink href="/">{t('nav.plan')}</NavLink>
-          <NavLink href="/history">{t('nav.history')}</NavLink>
-          {session && <NavLink href="/progress">{t('nav.progress') || 'Progress'}</NavLink>}
-          {!session && <NavLink href="/settings">{t('nav.settings')}</NavLink>}
+          <NavLink href="/" active={pathname === '/'}>{t('nav.plan')}</NavLink>
+          <NavLink href="/history" active={pathname === '/history'}>{t('nav.history')}</NavLink>
+          {session && <NavLink href="/progress" active={pathname === '/progress'}>{t('nav.progress') || 'Progress'}</NavLink>}
+          {!session && <NavLink href="/settings" active={pathname === '/settings'}>{t('nav.settings')}</NavLink>}
 
           <LanguageSwitcher />
 
@@ -260,8 +262,8 @@ export default function Navbar() {
 
           {/* Nav links */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <MobileNavLink href="/" onClick={() => setMobileMenuOpen(false)} icon={<Calendar size={18} />}>{t('nav.plan')}</MobileNavLink>
-            <MobileNavLink href="/history" onClick={() => setMobileMenuOpen(false)} icon={<History size={18} />}>{t('nav.history')}</MobileNavLink>
+            <MobileNavLink href="/" active={pathname === '/'} onClick={() => setMobileMenuOpen(false)} icon={<Calendar size={18} />}>{t('nav.plan')}</MobileNavLink>
+            <MobileNavLink href="/history" active={pathname === '/history'} onClick={() => setMobileMenuOpen(false)} icon={<History size={18} />}>{t('nav.history')}</MobileNavLink>
 
             {status === 'loading' ? (
               <>
@@ -270,14 +272,14 @@ export default function Navbar() {
               </>
             ) : session ? (
               <>
-                <MobileNavLink href="/progress" onClick={() => setMobileMenuOpen(false)} icon={<TrendingUp size={18} />}>{t('nav.progress') || 'Progress'}</MobileNavLink>
-                <MobileNavLink href="/leaderboard" onClick={() => setMobileMenuOpen(false)} icon={<Trophy size={18} />}>{t('nav.leaderboard')}</MobileNavLink>
-                <MobileNavLink href="/badges" onClick={() => setMobileMenuOpen(false)} icon={<Medal size={18} />}>{t('nav.badges') || 'Badges'}</MobileNavLink>
-                <MobileNavLink href="/profile" onClick={() => setMobileMenuOpen(false)} icon={<User size={18} />}>{t('nav.profile')}</MobileNavLink>
-                <MobileNavLink href="/settings" onClick={() => setMobileMenuOpen(false)} icon={<Settings size={18} />}>{t('nav.settings')}</MobileNavLink>
+                <MobileNavLink href="/progress" active={pathname === '/progress'} onClick={() => setMobileMenuOpen(false)} icon={<TrendingUp size={18} />}>{t('nav.progress') || 'Progress'}</MobileNavLink>
+                <MobileNavLink href="/leaderboard" active={pathname === '/leaderboard'} onClick={() => setMobileMenuOpen(false)} icon={<Trophy size={18} />}>{t('nav.leaderboard')}</MobileNavLink>
+                <MobileNavLink href="/badges" active={pathname === '/badges'} onClick={() => setMobileMenuOpen(false)} icon={<Medal size={18} />}>{t('nav.badges') || 'Badges'}</MobileNavLink>
+                <MobileNavLink href="/profile" active={pathname === '/profile'} onClick={() => setMobileMenuOpen(false)} icon={<User size={18} />}>{t('nav.profile')}</MobileNavLink>
+                <MobileNavLink href="/settings" active={pathname === '/settings'} onClick={() => setMobileMenuOpen(false)} icon={<Settings size={18} />}>{t('nav.settings')}</MobileNavLink>
               </>
             ) : (
-              <MobileNavLink href="/settings" onClick={() => setMobileMenuOpen(false)} icon={<Settings size={18} />}>{t('nav.settings')}</MobileNavLink>
+              <MobileNavLink href="/settings" active={pathname === '/settings'} onClick={() => setMobileMenuOpen(false)} icon={<Settings size={18} />}>{t('nav.settings')}</MobileNavLink>
             )}
           </div>
 
@@ -315,33 +317,59 @@ export default function Navbar() {
   )
 }
 
-function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+function NavLink({ href, children, active }: { href: string; children: React.ReactNode; active?: boolean }) {
   return (
     <Link href={href} style={{
-      color: 'var(--muted)',
-      fontSize: 13, fontWeight: 500,
-      padding: '6px 10px', borderRadius: 6, textDecoration: 'none',
-      transition: 'color 0.15s',
+      color: active ? 'var(--text)' : 'var(--muted)',
+      background: active ? 'rgba(124,106,247,0.08)' : 'transparent',
+      fontSize: 13, fontWeight: active ? 600 : 500,
+      padding: '6px 12px', borderRadius: 8, textDecoration: 'none',
+      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      border: active ? '1px solid rgba(124,106,247,0.15)' : '1px solid transparent',
     }}
-      onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
-      onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+      onMouseEnter={e => {
+        if (!active) {
+          e.currentTarget.style.color = 'var(--text)'
+          e.currentTarget.style.background = 'rgba(124,106,247,0.04)'
+        }
+      }}
+      onMouseLeave={e => {
+        if (!active) {
+          e.currentTarget.style.color = 'var(--muted)'
+          e.currentTarget.style.background = 'transparent'
+        }
+      }}
     >
       {children}
     </Link>
   )
 }
 
-function MobileNavLink({ href, children, onClick, icon }: { href: string; children: React.ReactNode; onClick: () => void; icon?: React.ReactNode }) {
+function MobileNavLink({ href, children, onClick, icon, active }: { href: string; children: React.ReactNode; onClick: () => void; icon?: React.ReactNode; active?: boolean }) {
   return (
     <Link href={href} onClick={onClick} style={{
-      color: 'var(--text)', fontSize: 14, fontWeight: 500,
-      padding: '12px 14px', borderRadius: 10, textDecoration: 'none',
-      transition: 'background 0.15s', display: 'flex', alignItems: 'center', gap: 12,
+      color: active ? 'var(--accent)' : 'var(--text)', 
+      background: active ? 'rgba(124,106,247,0.08)' : 'transparent',
+      fontSize: 14, fontWeight: active ? 700 : 500,
+      padding: '12px 14px', borderRadius: 12, textDecoration: 'none',
+      transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 12,
+      border: active ? '1px solid rgba(124,106,247,0.2)' : '1px solid transparent',
     }}
-      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,106,247,0.06)')}
-      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+      onMouseEnter={e => {
+        if (!active) e.currentTarget.style.background = 'rgba(124,106,247,0.06)'
+      }}
+      onMouseLeave={e => {
+        if (!active) e.currentTarget.style.background = 'transparent'
+      }}
     >
-      {icon && <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, flexShrink: 0, color: 'var(--muted)' }}>{icon}</span>}
+      {icon && (
+        <span style={{ 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', width: 22, flexShrink: 0, 
+          color: active ? 'var(--accent)' : 'var(--muted)' 
+        }}>
+          {icon}
+        </span>
+      )}
       {children}
     </Link>
   )
