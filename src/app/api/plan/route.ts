@@ -84,7 +84,25 @@ export async function POST(req: NextRequest) {
 
     const plan = parseSchedule(aiResponse.content)
 
-    // Validate blocks have valid time ranges
+    // Programmatic gap enforcement (ensure 10m gap)
+    plan.blocks.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
+    for (let i = 0; i < plan.blocks.length - 1; i++) {
+      const current = plan.blocks[i]
+      const next = plan.blocks[i + 1]
+      const currentEndMins = timeToMinutes(current.endTime)
+      const nextStartMins = timeToMinutes(next.startTime)
+      
+      if (nextStartMins < currentEndMins + 10) {
+        // Shift next block start time to ensure 10m gap
+        const newStartMins = currentEndMins + 10
+        const duration = timeToMinutes(next.endTime) - nextStartMins
+        next.startTime = minutesToTime(newStartMins)
+        next.endTime = minutesToTime(newStartMins + duration)
+      }
+    }
+
+    // Validate blocks have valid time ranges and stay within day boundaries
+    const dayEndMins = timeToMinutes(endTime)
     for (const block of plan.blocks) {
       if (!isValidTimeRange(block.startTime, block.endTime)) {
         return NextResponse.json(
@@ -92,11 +110,18 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         )
       }
+      if (timeToMinutes(block.endTime) > dayEndMins) {
+        plan.overflow.push(block.title)
+        plan.blocks = plan.blocks.filter(b => b !== block)
+      }
     }
 
     // Check for internal conflicts (blocks overlapping within the plan)
     const internalConflicts = findInternalConflicts(plan.blocks)
     if (internalConflicts.length > 0) {
+      const occupied = plan.blocks.map(b => ({ startTime: b.startTime, endTime: b.endTime }))
+      const available = calculateAvailableSlots(startTime, endTime, occupied, 15)
+      
       const conflictDetails = internalConflicts
         .map((c) => {
           const b1 = plan.blocks[c.index1]
@@ -109,6 +134,9 @@ export async function POST(req: NextRequest) {
         {
           error: 'Generated schedule has overlapping blocks',
           details: conflictDetails,
+          suggestion: available.length > 0 
+            ? `Try manually adjusting these blocks. Available gaps: ${available.map(s => `${s.startTime}-${s.endTime}`).join(', ')}`
+            : 'The tasks are too tightly packed. Try reducing the number of tasks.'
         },
         { status: 400 }
       )

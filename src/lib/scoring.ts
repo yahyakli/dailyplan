@@ -170,7 +170,7 @@ export function getBadgeProgress(
   return { ...progress, percentage: Math.min(percentage, 100) }
 }
 
-export function updateStreak(lastPlanDate: string | null): {
+export function updateStreak(lastPlanDate: string | null, existingStreak: number = 0): {
   currentStreak: number
   increment: boolean
 } {
@@ -186,11 +186,11 @@ export function updateStreak(lastPlanDate: string | null): {
   const yesterdayDate = yesterday.toDateString()
 
   if (lastDate === todayDate) {
-    // Already planned today — don't increment
-    return { currentStreak: 0, increment: false }
+    // Already planned today — keep existing streak
+    return { currentStreak: existingStreak || 1, increment: false }
   } else if (lastDate === yesterdayDate) {
     // Consecutive day — continue streak
-    return { currentStreak: 1, increment: true }
+    return { currentStreak: (existingStreak || 1) + 1, increment: true }
   } else {
     // Streak broken — reset
     return { currentStreak: 1, increment: false }

@@ -103,23 +103,40 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
 
   // Fetch occupied time slots when date changes
   const fetchOccupiedSlots = useCallback(async () => {
-    if (!session?.user) {
-      setOccupiedSlots([])
-      return
+    if (session?.user) {
+      setIsLoadingSlots(true)
+      try {
+        const res = await fetch(`/api/plan/slots?date=${date}&dayStart=${startTime}&dayEnd=${endTime}`)
+        if (res.ok) {
+          const data = await res.json()
+          setOccupiedSlots(data.occupiedSlots || [])
+          setIsLoadingSlots(false)
+          return
+        }
+      } catch (err) {
+        console.error('Failed to fetch time slots:', err)
+      }
     }
 
-    setIsLoadingSlots(true)
-    try {
-      const res = await fetch(`/api/plan/slots?date=${date}&dayStart=${startTime}&dayEnd=${endTime}`)
-      if (res.ok) {
-        const data = await res.json()
-        setOccupiedSlots(data.occupiedSlots || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch time slots:', err)
-    } finally {
-      setIsLoadingSlots(false)
-    }
+    // Guest fallback: check localStorage for plans on this date
+    const localPlans = Object.keys(localStorage)
+      .filter(k => k.startsWith(`dailyplan:plan:${date}`))
+      .map(k => JSON.parse(localStorage.getItem(k) || '{}'))
+      .filter(p => !p.isArchived)
+    
+    const slots: OccupiedSlot[] = []
+    localPlans.forEach(p => {
+      p.blocks?.forEach((b: any) => {
+        slots.push({
+          startTime: b.startTime,
+          endTime: b.endTime,
+          blockTitle: b.title,
+          blockCategory: b.category
+        })
+      })
+    })
+    setOccupiedSlots(slots)
+    setIsLoadingSlots(false)
   }, [date, startTime, endTime, session])
 
   useEffect(() => {
@@ -132,6 +149,10 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       return
     }
 
+    if (cooldown > 0) {
+      toast.error(t('braindump.cooldownNote') || 'Please wait before generating again.')
+      return
+    }
 
     if (date === localTodayStr) {
       const now = new Date()
@@ -148,6 +169,11 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         toast.error(t('braindump.startTimeErrorToday'))
         return
       }
+    }
+
+    // Guest conflict check
+    if (!session?.user && occupiedSlots.length > 0) {
+      // General window check could go here if needed
     }
 
     setError('')
@@ -171,6 +197,20 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
       })
 
       const data = await res.json()
+
+      // Cooldown only for successful generation or AI-related errors
+      if (res.ok || res.status === 429 || res.status === 503) {
+        setCooldown(10)
+        const timer = setInterval(() => {
+          setCooldown((prev) => {
+            if (prev <= 1) {
+              clearInterval(timer)
+              return 0
+            }
+            return prev - 1
+          })
+        }, 1000)
+      }
 
       // Handle conflict response (409)
       if (res.status === 409) {
@@ -217,6 +257,38 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
           completed: false,
         })),
       }
+
+      // Final Guest Conflict Check for individual blocks
+      if (!session?.user) {
+        const guestConflicts: ConflictInfo[] = []
+        plan.blocks.forEach(b => {
+          occupiedSlots.forEach(os => {
+            const s1 = timeToMinutes(b.startTime)
+            const e1 = timeToMinutes(b.endTime)
+            const s2 = timeToMinutes(os.startTime)
+            const e2 = timeToMinutes(os.endTime)
+            if (s1 < e2 && s2 < e1) {
+              guestConflicts.push({
+                blockTitle: b.title,
+                blockTime: `${b.startTime}-${b.endTime}`,
+                existingPlanDate: date,
+                existingBlockTitle: os.blockTitle,
+                existingTime: `${os.startTime}-${os.endTime}`
+              })
+            }
+          })
+        })
+
+        if (guestConflicts.length > 0) {
+          setConflicts(guestConflicts)
+          setShowConflictWarning(true)
+          setLoading(false)
+          onLoading(false)
+          toast.error(t('braindump.conflictDetected'))
+          return
+        }
+      }
+
       savePlanLocally(plan)
 
       toast.success(t('braindump.successToast'))
@@ -230,18 +302,6 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
     } finally {
       setLoading(false)
       onLoading(false)
-      
-      // Implement a 10-second cooldown to prevent spamming the AI API
-      setCooldown(10)
-      const timer = setInterval(() => {
-        setCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer)
-            return 0
-          }
-          return prev - 1
-        })
-      }, 1000)
     }
   }
 

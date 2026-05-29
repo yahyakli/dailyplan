@@ -23,16 +23,20 @@ export interface AvailableSlot {
  * Convert HH:MM string to minutes since midnight
  */
 export function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number)
-  return hours * 60 + minutes
+  if (!time || typeof time !== 'string' || !time.includes(':')) return 0
+  const parts = time.split(':')
+  const hours = parseInt(parts[0], 10) || 0
+  const minutes = parseInt(parts[1], 10) || 0
+  return Math.min(Math.max(hours * 60 + minutes, 0), 1439)
 }
 
 /**
  * Convert minutes since midnight to HH:MM string
  */
 export function minutesToTime(minutes: number): string {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
+  const totalMins = Math.min(Math.max(minutes, 0), 1439)
+  const hours = Math.floor(totalMins / 60)
+  const mins = totalMins % 60
   return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`
 }
 
