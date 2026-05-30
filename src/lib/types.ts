@@ -8,23 +8,28 @@ export interface Block {
   startTime: string   // HH:MM
   endTime: string     // HH:MM
   title: string
-  category: BlockCategory
-  priority: Priority
-  notes?: string
-  completed?: boolean
-  status?: string              // For Guest persistence (pending, in_progress, completed, skipped)
-  progressPercentage?: number  // For Guest persistence (0-100)
+  description?: string
+  category?: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  status: 'todo' | 'in_progress' | 'done' | 'skipped'
+  xpValue: number
+  order: number
 }
 
 export interface Plan {
   _id?: string        // MongoDB ID
-  date: string        // ISO date string
-  blocks: Block[]
-  overflow: string[]
-  insight: string
-  rawInput?: string
+  title: string
+  braindump: string
+  planDate: string
+  startTime: string
+  endTime: string
+  contextTags: string[]
+  tasks: Block[]
+  status: 'draft' | 'active' | 'completed' | 'missed'
+  totalXPEarned: number
+  completionRate: number
+  isGuestPlan: boolean
   createdAt?: string
-  status?: 'draft' | 'active' | 'completed'
 }
 
 // ─── User & Auth Types ────────────────────────────────────────────────────────

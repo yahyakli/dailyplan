@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/auth'
 import { connectDB } from '@/lib/mongodb'
 import { User } from '@/models/User'
 import { formatDuration } from '@/lib/timeValidation'
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Check authentication
-    const session = await getServerSession()
+    const session = await auth()
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Authentication required' },

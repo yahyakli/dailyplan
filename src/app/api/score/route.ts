@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/auth'
 import { connectDB } from '@/lib/mongodb'
 import { User } from '@/models/User'
 import { Score } from '@/models/Score'
@@ -10,7 +10,7 @@ import type { Plan, BadgeId } from '@/lib/types'
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession()
+    const session = await auth()
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/auth'
 import { buildPrompt } from '@/lib/buildPrompt'
 import { parseSchedule } from '@/lib/parseSchedule'
 import { connectDB } from '@/lib/mongodb'
@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if user is authenticated
-    const session = await getServerSession()
+    const session = await auth()
     let userId: string | null = null
     let existingPlanId: string | null = null
 
@@ -286,7 +286,7 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    const session = await getServerSession()
+    const session = await auth()
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Authentication required' },

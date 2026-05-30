@@ -10,12 +10,12 @@ export const BADGES: Record<BadgeId, Badge> = {
   plans_30:         { id: 'plans_30',         iconName: 'Trophy', label: '30 Plans',         description: 'Created 30 total plans' },
   plans_50:         { id: 'plans_50',         iconName: 'Medal', label: '50 Plans',         description: 'Created 50 total plans' },
   plans_100:        { id: 'plans_100',        iconName: 'Crown', label: 'Century Planner',  description: 'Created 100 total plans' },
-  perfect_day:      { id: 'perfect_day',      iconName: 'Sparkles', label: 'Perfect Day',      description: 'Scheduled everything with no overflow' },
-  perfect_week:     { id: 'perfect_week',     iconName: 'Star', label: 'Perfect Week',     description: '7 consecutive days with no overflow' },
+  perfect_day:      { id: 'perfect_day',      iconName: 'Sparkles', label: 'Perfect Day',      description: 'Completed all tasks in a plan' },
+  perfect_week:     { id: 'perfect_week',     iconName: 'Star', label: 'Perfect Week',     description: '7 consecutive days with full completion' },
   early_bird:       { id: 'early_bird',       iconName: 'Sunrise', label: 'Early Bird',       description: 'Created a plan before 8 AM' },
   night_owl:        { id: 'night_owl',        iconName: 'Moon', label: 'Night Owl',        description: 'Created a plan after 9 PM' },
   deep_focus:       { id: 'deep_focus',       iconName: 'Brain', label: 'Deep Focus',       description: 'Scheduled 3+ deep-work blocks in one plan' },
-  variety:          { id: 'variety',          iconName: 'Palette', label: 'Renaissance',       description: 'Used all 5 block categories in one plan' },
+  variety:          { id: 'variety',          iconName: 'Palette', label: 'Renaissance',       description: 'Used all block categories in one plan' },
   weekend_warrior:  { id: 'weekend_warrior',  iconName: 'Calendar', label: 'Weekend Warrior',  description: 'Created a plan on a weekend' },
 }
 
@@ -59,23 +59,20 @@ export function calculatePoints(
   // Base plan creation
   add('Created a plan', 10)
 
-  // Block count bonus
-  if (plan.blocks.length >= 5) add('Planned 5+ blocks', 5)
-
-  // Perfect day (no overflow)
-  if (plan.overflow.length === 0) add('Perfect day — no overflow tasks', 10)
+  // Task count bonus
+  if (plan.tasks.length >= 5) add('Planned 5+ tasks', 5)
 
   // High priority tasks scheduled
-  const highPriorityBlocks = plan.blocks.filter(b => b.priority === 'high').length
-  if (highPriorityBlocks >= 2) add('All high-priority tasks scheduled', 8)
+  const highPriorityTasks = plan.tasks.filter(b => b.priority === 'high' || b.priority === 'critical').length
+  if (highPriorityTasks >= 2) add('Multiple high-priority tasks scheduled', 8)
 
   // Deep focus bonus
-  const deepWorkBlocks = plan.blocks.filter(b => b.category === 'deep-work').length
-  if (deepWorkBlocks >= 3) add('Deep focus — 3+ deep-work blocks', 8)
+  const deepWorkTasks = plan.tasks.filter(b => b.category === 'deep-work' || b.category === 'work').length
+  if (deepWorkTasks >= 3) add('Deep focus — 3+ focus tasks', 8)
 
   // Variety bonus
-  const categories = new Set(plan.blocks.map(b => b.category))
-  if (categories.size >= 5) add('Variety — all categories used', 5)
+  const categories = new Set(plan.tasks.map(b => b.category).filter(Boolean))
+  if (categories.size >= 4) add('Variety — multiple categories used', 5)
 
   // Streak bonuses
   if (currentStreak >= 30) add('30-day streak bonus', 50)
@@ -111,7 +108,7 @@ export function checkNewBadges(
   if (allTimePlans + 1 >= 100) unlock('plans_100')
 
   // Perfect day/week badges
-  if (plan.overflow.length === 0) unlock('perfect_day')
+  if (plan.completionRate >= 90) unlock('perfect_day')
   if (perfectDaysInARow >= 7) unlock('perfect_week')
 
   // Streak badges
@@ -125,11 +122,11 @@ export function checkNewBadges(
   if (hour >= 21) unlock('night_owl')
 
   // Plan content badges
-  const deepWorkBlocks = plan.blocks.filter(b => b.category === 'deep-work').length
-  if (deepWorkBlocks >= 3) unlock('deep_focus')
+  const focusTasks = plan.tasks.filter(b => b.category === 'deep-work' || b.category === 'work').length
+  if (focusTasks >= 3) unlock('deep_focus')
 
-  const categories = new Set(plan.blocks.map(b => b.category))
-  if (categories.size >= 5) unlock('variety')
+  const categories = new Set(plan.tasks.map(b => b.category).filter(Boolean))
+  if (categories.size >= 4) unlock('variety')
 
   // Weekend badge
   if (day === 0 || day === 6) unlock('weekend_warrior')
@@ -137,10 +134,6 @@ export function checkNewBadges(
   return newBadges
 }
 
-/**
- * Returns progress toward a specific badge.
- * { current, target, percentage }
- */
 export function getBadgeProgress(
   badgeId: BadgeId,
   stats: { allTimePlans: number; currentStreak: number; perfectDaysInARow: number }
@@ -162,7 +155,6 @@ export function getBadgeProgress(
 
   const progress = progressMap[badgeId]
   if (!progress) {
-    // Badges without numeric progress (early_bird, night_owl, etc.)
     return { current: 0, target: 1, percentage: 0 }
   }
 
@@ -186,13 +178,10 @@ export function updateStreak(lastPlanDate: string | null, existingStreak: number
   const yesterdayDate = yesterday.toDateString()
 
   if (lastDate === todayDate) {
-    // Already planned today — keep existing streak
     return { currentStreak: existingStreak || 1, increment: false }
   } else if (lastDate === yesterdayDate) {
-    // Consecutive day — continue streak
     return { currentStreak: (existingStreak || 1) + 1, increment: true }
   } else {
-    // Streak broken — reset
     return { currentStreak: 1, increment: false }
   }
 }

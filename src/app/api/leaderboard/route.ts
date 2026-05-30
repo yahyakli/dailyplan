@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { auth } from '@/auth'
 import { connectDB } from '@/lib/mongodb'
 import { Score } from '@/models/Score'
 import { Streak } from '@/models/Streak'
@@ -9,7 +9,7 @@ import type { LeaderboardEntry, BadgeId } from '@/lib/types'
 
 export async function GET() {
   try {
-    const session = await getServerSession()
+    const session = await auth()
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }

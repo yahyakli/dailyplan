@@ -1,47 +1,72 @@
 import mongoose, { Schema, Document, model, models } from 'mongoose'
-import type { BlockCategory, Priority } from '@/lib/types'
 
-export interface IBlock {
+export interface ITask {
+  _id?: mongoose.Types.ObjectId
+  title: string
+  description?: string
   startTime: string
   endTime: string
-  title: string
-  category: BlockCategory
-  priority: Priority
-  notes?: string
+  durationMin: number
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  category?: string
+  status: 'todo' | 'in_progress' | 'done' | 'skipped'
+  xpValue: number
+  order: number
 }
 
 export interface IPlan extends Document {
-  userId: mongoose.Types.ObjectId
-  date: string
-  blocks: IBlock[]
-  overflow: string[]
-  insight: string
-  rawInput: string
-  isArchived: boolean
+  userId?: mongoose.Types.ObjectId | null
+  guestSessionId?: string
+  title: string
+  braindump: string
+  planDate: Date
+  startTime: string
+  endTime: string
+  contextTags: string[]
+  tasks: ITask[]
+  status: 'draft' | 'active' | 'completed' | 'missed'
+  aiModel?: string
+  aiPromptHash?: string
+  totalXPEarned: number
+  completionRate: number
+  isGuestPlan: boolean
   createdAt: Date
+  updatedAt: Date
 }
 
-const BlockSchema = new Schema<IBlock>({
+const TaskSchema = new Schema<ITask>({
+  title: { type: String, required: true },
+  description: { type: String },
   startTime: { type: String, required: true },
-  endTime:   { type: String, required: true },
-  title:     { type: String, required: true },
-  category:  { type: String, enum: ['deep-work','communication','admin','personal','break'], required: true },
-  priority:  { type: String, enum: ['high','medium','low'], required: true },
-  notes:     { type: String },
-}, { _id: false })
-
-const PlanSchema = new Schema<IPlan>({
-  userId:   { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  date:     { type: String, required: true }, // YYYY-MM-DD
-  blocks:   [BlockSchema],
-  overflow: [String],
-  insight:  { type: String },
-  rawInput: { type: String },
-  isArchived: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
+  endTime: { type: String, required: true },
+  durationMin: { type: Number, required: true },
+  priority: { type: String, enum: ['low', 'medium', 'high', 'critical'], default: 'medium' },
+  category: { type: String },
+  status: { type: String, enum: ['todo', 'in_progress', 'done', 'skipped'], default: 'todo' },
+  xpValue: { type: Number, default: 0 },
+  order: { type: Number, default: 0 },
 })
 
-// Index for efficient plan retrieval by user and date
-PlanSchema.index({ userId: 1, date: 1, isArchived: 1 })
+const PlanSchema = new Schema<IPlan>({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+  guestSessionId: { type: String, index: true },
+  title: { type: String, required: true, maxlength: 80 },
+  braindump: { type: String, required: true },
+  planDate: { type: Date, required: true },
+  startTime: { type: String, required: true }, // HH:MM
+  endTime: { type: String, required: true }, // HH:MM
+  contextTags: [{ type: String }],
+  tasks: [TaskSchema],
+  status: { type: String, enum: ['draft', 'active', 'completed', 'missed'], default: 'draft' },
+  aiModel: { type: String },
+  aiPromptHash: { type: String },
+  totalXPEarned: { type: Number, default: 0 },
+  completionRate: { type: Number, default: 0 },
+  isGuestPlan: { type: Boolean, default: false },
+}, { timestamps: true })
+
+// Index for efficient plan retrieval
+PlanSchema.index({ userId: 1, planDate: 1, status: 1 })
+PlanSchema.index({ guestSessionId: 1, planDate: 1 })
 
 export const Plan = models.Plan || model<IPlan>('Plan', PlanSchema)

@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
       email: email.toLowerCase(),
       password: hashed,
       provider: 'credentials',
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+      image: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
     })
 
     return NextResponse.json({
