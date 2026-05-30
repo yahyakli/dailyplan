@@ -5,7 +5,7 @@ import { getRecentPlans } from '@/lib/storage'
 import type { Plan } from '@/lib/types'
 import ScheduleView from '@/components/ScheduleView'
 import HistoryCard from '@/components/HistoryCard'
-import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { useTranslations } from 'next-intl'
 import { CalendarDays } from 'lucide-react'
 
 export default function HistoryPage() {

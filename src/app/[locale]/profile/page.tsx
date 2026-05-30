@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
 import BadgeCard from '@/components/BadgeCard'
 import { BADGES, BADGE_CATEGORIES, getBadgeProgress } from '@/lib/scoring'
 import type { BadgeId } from '@/lib/types'
-import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { useTranslations } from 'next-intl'
 import { ClipboardList, Flame, Zap, Sparkles, Trophy } from 'lucide-react'
 
 interface ProfileData {

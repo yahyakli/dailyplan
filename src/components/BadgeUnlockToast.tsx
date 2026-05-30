@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Badge } from '@/lib/types'
 import BadgeIcon from './BadgeIcon'
-import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { useTranslations } from 'next-intl'
 
 interface BadgeUnlockToastProps {
   badges: Badge[]

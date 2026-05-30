@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import BrainDump from '@/components/BrainDump'
 import ScheduleView from '@/components/ScheduleView'
 import type { Plan } from '@/lib/types'
-import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { useTranslations } from 'next-intl'
 import { getPlanByDate } from '@/lib/storage'
 
 export default function Home() {

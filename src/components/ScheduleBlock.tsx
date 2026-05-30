@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { Block } from '@/lib/types'
-import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { useTranslations } from 'next-intl'
 import {
   Target,
   MessageCircle,

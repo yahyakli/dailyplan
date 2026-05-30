@@ -1,11 +1,10 @@
 'use client'
 import { signOut, useSession } from 'next-auth/react'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { Link, usePathname } from '@/i18n/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { Menu, X, Calendar, History, Trophy, Medal, User, Settings, TrendingUp } from 'lucide-react'
 import LanguageSwitcher from './LanguageSwitcher'
-import { useLanguage, useTranslations } from '@/lib/i18n/LanguageContext'
+import { useLocale, useTranslations } from 'next-intl'
 
 export default function Navbar() {
   const { data: session, status } = useSession()
@@ -13,7 +12,8 @@ export default function Navbar() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
   const [isDark, setIsDark] = useState(true)
-  const { isRtl } = useLanguage()
+  const locale = useLocale()
+  const isRtl = locale === 'ar'
   const t = useTranslations()
   const pathname = usePathname()
 

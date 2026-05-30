@@ -2,7 +2,7 @@
 import type { Plan, Block } from '@/lib/types'
 import ScheduleBlock, { BlockProgressInfo, BlockStatus } from './ScheduleBlock'
 import OverflowList from './OverflowList'
-import { useTranslations, useLanguage } from '@/lib/i18n/LanguageContext'
+import { useTranslations, useLocale } from 'next-intl'
 import { Lightbulb, ListTodo, Flame, Inbox, PlayCircle } from 'lucide-react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { savePlanLocally } from '@/lib/storage'
@@ -22,7 +22,7 @@ interface BlockProgressMap {
 
 export default function ScheduleView({ plan, onReset }: Props) {
   const t = useTranslations()
-  const { locale } = useLanguage()
+  const locale = useLocale()
   const { data: session } = useSession()
   const [currentPlan, setCurrentPlan] = useState(plan)
   const [newBadges, setNewBadges] = useState<Badge[]>([])

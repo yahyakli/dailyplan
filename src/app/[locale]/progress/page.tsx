@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useTranslations, useLanguage } from '@/lib/i18n/LanguageContext'
+import { useTranslations, useLocale } from 'next-intl'
 import {
   TrendingUp,
   Calendar,
@@ -39,9 +39,9 @@ interface ProgressStats {
   }
 }
 
-export default function ProgressPage() {
+export function ProgressPage() {
   const { data: session, status } = useSession()
-  const { locale } = useLanguage()
+  const locale = useLocale()
   const t = useTranslations()
   const [stats, setStats] = useState<ProgressStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)

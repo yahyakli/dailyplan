@@ -2,7 +2,7 @@ import type { LeaderboardEntry } from '@/lib/types'
 import { BADGES } from '@/lib/scoring'
 import BadgeIcon from './BadgeIcon'
 import { Trophy, Medal, Award, Flame } from 'lucide-react'
-import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { useTranslations } from 'next-intl'
 
 export default function LeaderboardTable({ entries, currentUserId }: {
   entries: LeaderboardEntry[]

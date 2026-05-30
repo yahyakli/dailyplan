@@ -1,10 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from '@/i18n/navigation'
 import LeaderboardTable from '@/components/LeaderboardTable'
 import type { LeaderboardEntry } from '@/lib/types'
-import { useTranslations } from '@/lib/i18n/LanguageContext'
+import { useTranslations } from 'next-intl'
 
 export default function LeaderboardPage() {
   const { data: session, status } = useSession()

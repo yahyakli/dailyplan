@@ -4,10 +4,11 @@ import { savePlanLocally, getGuestPlanCount } from '@/lib/storage'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
 import type { Plan, Badge, Block } from '@/lib/types'
-import { useTranslations, useLanguage } from '@/lib/i18n/LanguageContext'
+import { useTranslations, useLocale } from 'next-intl'
 import { Star, AlertTriangle, Clock, Calendar, Info, Sparkles, Timer } from 'lucide-react'
 import BadgeUnlockToast from './BadgeUnlockToast'
 import TimeSlotVisualizer from './TimeSlotVisualizer'
+import { timeToMinutes } from '@/lib/timeValidation'
 
 interface OccupiedSlot {
   startTime: string
@@ -31,7 +32,7 @@ interface Props {
 
 export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const { data: session } = useSession()
-  const { locale } = useLanguage()
+  const locale = useLocale()
   const today = new Date()
   const localTodayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0]
 

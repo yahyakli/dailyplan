@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useLanguage } from '@/lib/i18n/LanguageContext'
-import { locales, type Locale } from '@/lib/i18n/config'
+import { useLocale } from 'next-intl'
+import { locales, type Locale } from '@/i18n/config'
+import { useRouter, usePathname } from '@/i18n/navigation'
 import { Globe } from 'lucide-react'
 
 const localeLabels: Record<Locale, string> = {
@@ -18,7 +19,10 @@ const localeFullNames: Record<Locale, string> = {
 }
 
 export default function LanguageSwitcher({ align, direction = 'down' }: { align?: 'left' | 'right', direction?: 'up' | 'down' } = {}) {
-  const { locale, setLocale, isRtl } = useLanguage()
+  const locale = useLocale() as Locale
+  const router = useRouter()
+  const pathname = usePathname()
+  const isRtl = locale === 'ar'
   const [isOpen, setIsOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -35,7 +39,7 @@ export default function LanguageSwitcher({ align, direction = 'down' }: { align?
   }, [isOpen])
 
   const handleLocaleChange = (newLocale: Locale) => {
-    setLocale(newLocale)
+    router.push(pathname, { locale: newLocale })
     setIsOpen(false)
   }
 
