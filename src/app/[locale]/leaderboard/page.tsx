@@ -1,56 +1,77 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from '@/i18n/navigation'
 import LeaderboardTable from '@/components/LeaderboardTable'
-import type { LeaderboardEntry } from '@/lib/types'
+import Podium from '@/components/LeaderboardPodium'
 import { useTranslations } from 'next-intl'
+import { Button } from '@/components/ui/button'
 
 export default function LeaderboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([])
+  const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState('alltime')
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const observerRef = useRef<HTMLDivElement>(null)
   const t = useTranslations()
 
-  useEffect(() => {
-    if (status === 'unauthenticated') { router.push('/auth/signin'); return }
-    if (status !== 'authenticated') return
+  const fetchEntries = useCallback(async (pageNum: number, reset = false) => {
+    if (reset) setEntries([])
+    const res = await fetch(`/api/leaderboard?period=${period}&page=${pageNum}`)
+    const data = await res.json()
 
-    fetch('/api/leaderboard')
-      .then(r => r.json())
-      .then(data => { setEntries(data); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [status, router])
+    setEntries(prev => reset ? data.rankings : [...prev, ...data.rankings])
+    setHasMore(data.rankings.length > 0)
+    setLoading(false)
+  }, [period])
+
+  useEffect(() => {
+    setPage(1)
+    fetchEntries(1, true)
+  }, [period, fetchEntries])
+
+  // Infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !loading) {
+        setPage(p => p + 1)
+        fetchEntries(page + 1)
+      }
+    }, { threshold: 1.0 })
+
+    if (observerRef.current) observer.observe(observerRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, loading, page, fetchEntries])
 
   const currentUserId = (session?.user as { id?: string })?.id
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
-      <div className="fade-up">
-        <p style={{ fontSize: 12, fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 8 }}>
-          {t('leaderboard.topPlanners')}
-        </p>
-        <h1 style={{ fontSize: 'clamp(24px, 7vw, 30px)', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 6 }}>{t('leaderboard.title')}</h1>
-        <p style={{ color: 'var(--muted)', fontSize: 'clamp(13px, 2.5vw, 14px)', marginBottom: 32 }}>
-          {t('leaderboard.subtitle')}
-        </p>
+    <div className="max-w-2xl mx-auto p-4 sm:p-6 fade-up">
+      <h1 className="text-3xl font-bold font-heading mb-6">{t('leaderboard.title')}</h1>
 
-        {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="skeleton" style={{ height: 64, animationDelay: `${i * 0.05}s` }} />
-            ))}
-          </div>
-        ) : entries.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--muted)' }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>🏆</div>
-            <p>{t('leaderboard.empty')}</p>
-          </div>
-        ) : (
-          <LeaderboardTable entries={entries} currentUserId={currentUserId} />
-        )}
+      <div className="flex gap-2 mb-6">
+        {['alltime', 'month', 'week'].map(p => (
+          <Button key={p} variant={period === p ? 'default' : 'outline'} onClick={() => setPeriod(p)}>
+            {t(`leaderboard.${p}`)}
+          </Button>
+        ))}
       </div>
+
+      {loading && page === 1 ? (
+        <div className="space-y-4">
+            <div className="h-40 skeleton rounded-xl" />
+            {[...Array(5)].map((_, i) => <div key={i} className="h-16 skeleton rounded-xl" />)}
+        </div>
+      ) : (
+        <>
+          <Podium entries={entries} />
+          <LeaderboardTable entries={entries} currentUserId={currentUserId} />
+          <div ref={observerRef} className="h-10" />
+        </>
+      )}
     </div>
   )
 }

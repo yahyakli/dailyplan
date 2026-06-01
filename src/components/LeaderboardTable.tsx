@@ -62,23 +62,25 @@ export default function LeaderboardTable({ entries, currentUserId }: {
                   {isMe && <span style={{ color: 'var(--accent)', marginLeft: 6, fontSize: 12 }}>({t('leaderboard.you')})</span>}
                 </span>
                 <span style={{ display: 'flex', gap: 4, color: 'var(--accent)' }}>
-                  {entry.topBadges.map(bid => (
+                  {entry.topBadges?.map(bid => (
                     <span key={bid} title={BADGES[bid]?.label} style={{ display: 'flex', alignItems: 'center' }}>
                       <BadgeIcon name={BADGES[bid]?.iconName} size={14} strokeWidth={2.5} />
                     </span>
                   ))}
                 </span>
               </div>
+              { (entry.allTimePlans !== undefined || entry.currentStreak !== undefined) && (
               <div style={{ display: 'flex', gap: 12, marginTop: 2 }}>
-                <Stat label={t('history.blocks')} value={entry.allTimePlans} />
-                <Stat label={t('profile.currentStreak')} value={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>{entry.currentStreak}<Flame size={12} color="#f75c6a" strokeWidth={3} /></span>} />
+                {entry.allTimePlans !== undefined && <Stat label={t('history.blocks')} value={entry.allTimePlans} />}
+                {entry.currentStreak !== undefined && <Stat label={t('profile.currentStreak')} value={<span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>{entry.currentStreak}<Flame size={12} color="#f75c6a" strokeWidth={3} /></span>} />}
               </div>
+              )}
             </div>
 
             {/* Points */}
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 18, background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                {entry.totalPoints.toLocaleString()}
+                {entry.points.toLocaleString()}
               </div>
               <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('leaderboard.pts')}</div>
             </div>

@@ -1,63 +1,86 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { connectDB } from '@/lib/mongodb'
-import { Score } from '@/models/Score'
-import { Streak } from '@/models/Streak'
-import { Achievement } from '@/models/Achievement'
 import { User } from '@/models/User'
-import type { LeaderboardEntry, BadgeId } from '@/lib/types'
+import { XPLog } from '@/models/XPLog'
+import { Plan } from '@/models/Plan'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
-    }
+    const { searchParams } = new URL(req.url)
+    const period = searchParams.get('period') || 'alltime'
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '50')
 
+    const session = await auth()
     await connectDB()
 
-    // Get top 50 scores
-    const topScores = await Score.find({})
-      .sort({ totalPoints: -1 })
-      .limit(50)
-      .lean()
+    const today = new Date()
+    const match: any = {}
 
-    // Get related data
-    const userIds = topScores.map(s => s.userId)
-    const [users, streaks, achievements] = await Promise.all([
-      User.find({ _id: { $in: userIds } }).lean(),
-      Streak.find({ userId: { $in: userIds } }).lean(),
-      Achievement.find({ userId: { $in: userIds } }).lean(),
-    ])
+    if (period === 'month') {
+      const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+      match.earnedAt = { $gte: firstDayOfMonth }
+    } else if (period === 'week') {
+      const firstDayOfWeek = new Date(today)
+      firstDayOfWeek.setDate(today.getDate() - today.getDay())
+      match.earnedAt = { $gte: firstDayOfWeek }
+    }
 
-    const userMap   = Object.fromEntries(users.map(u => [u._id.toString(), u]))
-    const streakMap = Object.fromEntries(streaks.map(s => [s.userId.toString(), s]))
-    const achieveMap = Object.fromEntries(achievements.map(a => [a.userId.toString(), a]))
-
-    const leaderboard: LeaderboardEntry[] = topScores.map((score, idx) => {
-      const uid    = score.userId.toString()
-      const user   = userMap[uid]
-      const streak = streakMap[uid]
-      const achieve = achieveMap[uid]
-
-      const topBadges: BadgeId[] = (achieve?.badges || [])
-        .slice(-3)
-        .map((b: { id: BadgeId }) => b.id)
-
-      return {
-        rank:          idx + 1,
-        userId:        uid,
-        name:          user?.name || 'Anonymous',
-        image:         user?.image,
-        totalPoints:   score.totalPoints,
-        weeklyPoints:  score.weeklyPoints,
-        currentStreak: streak?.currentStreak || 0,
-        allTimePlans:  score.allTimePlans,
-        topBadges,
+    // Aggregate ranking
+    const pipeline: any[] = [
+      { $match: match },
+      { $group: { _id: '$userId', totalXP: { $sum: '$xp' } } },
+      { $sort: { totalXP: -1 } },
+      { $skip: (page - 1) * limit },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      { $unwind: '$user' },
+      {
+        $project: {
+          userId: '$_id',
+          name: '$user.name',
+          image: '$user.avatar',
+          points: '$totalXP',
+        }
       }
-    })
+    ]
 
-    return NextResponse.json(leaderboard)
+    // If All-Time, just sort users by points
+    let entries: any[] = []
+    if (period === 'alltime') {
+       entries = await User.find({ isDeleted: false })
+        .sort({ points: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .select('name avatar points')
+        .lean()
+        .then(users => users.map(u => ({
+            userId: u._id,
+            name: u.name,
+            image: u.avatar,
+            points: u.points
+        })))
+    } else {
+        entries = await XPLog.aggregate(pipeline)
+    }
+
+    const leaderboard = entries.map((e, idx) => ({
+      ...e,
+      rank: ((page - 1) * limit) + idx + 1
+    }))
+
+    return NextResponse.json({
+        rankings: leaderboard,
+        total: await User.countDocuments({ isDeleted: false })
+    })
 
   } catch (err) {
     console.error('Leaderboard error:', err)

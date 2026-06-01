@@ -62,14 +62,14 @@ All work will be conducted in the `remake` parent branch, with feature-specific 
 ### Sprint 3: Engagement & Gamification
 **Goal:** Implement the reward system and social features.
 
-- [ ] **Task 3.1: Badges & Points Pipeline (`remake/badges-system`)**
+- [x] **Task 3.1: Badges & Points Pipeline (`remake/badges-system`)**
   - Implement the 40-badge catalogue and check pipeline.
   - Setup XP calculation for tasks and plan completion.
   - Create "Toast Celebration" for new badges.
-- [ ] **Task 3.2: Leaderboard System (`remake/leaderboard`)**
+- [x] **Task 3.2: Leaderboard System (`remake/leaderboard`)**
   - Create the ranking API with All-Time/Monthly/Weekly filters.
   - Build the Podium UI and Rankings Table with infinite scroll.
-- [ ] **Task 3.3: Progress Analytics (`remake/progress-page`)**
+- [x] **Task 3.3: Progress Analytics (`remake/progress-page`)**
   - Build the KPI tiles and Recharts charts (Calendar Heatmap, Trend, Pie chart).
 
 ### Sprint 4: Secondary Pages & Polish

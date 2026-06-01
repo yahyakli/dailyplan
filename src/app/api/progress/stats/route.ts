@@ -3,7 +3,6 @@ import { auth } from '@/auth'
 import { connectDB } from '@/lib/mongodb'
 import { User } from '@/models/User'
 import { Plan } from '@/models/Plan'
-import { Score } from '@/models/Score'
 import { BlockProgress } from '@/models/BlockProgress'
 
 export const runtime = 'nodejs'
@@ -35,14 +34,7 @@ export async function GET(_req: NextRequest) {
     const plans = await Plan.find({ userId }).lean()
     const planIds = plans.map((p) => p._id.toString())
 
-    // Get score/streak data
-    const scoreData = await Score.findOne({ userId }).lean()
-
-    // Calculate basic plan stats
-    const totalPlans = plans.length
-    const totalBlocks = plans.reduce((sum, plan) => sum + (plan.blocks?.length || 0), 0)
-
-    // Get all block progress entries for this user's plans
+    // Get all block progress entries
     const progressEntries = await BlockProgress.find({
       userId,
       planId: { $in: planIds },
@@ -51,12 +43,13 @@ export async function GET(_req: NextRequest) {
     const completedBlocks = progressEntries.filter(
       (p) => p.status === 'completed'
     ).length
+    const totalBlocks = plans.reduce((sum, plan) => sum + (plan.tasks?.length || 0), 0)
 
     // Calculate completion rate
     const completionRate = totalBlocks ? Math.round((completedBlocks / totalBlocks) * 100) : 0
 
     // Calculate average blocks per plan
-    const averageBlocksPerPlan = totalPlans ? totalBlocks / totalPlans : 0
+    const averageBlocksPerPlan = plans.length ? totalBlocks / plans.length : 0
 
     // Calculate completed plans (plans where all blocks are completed)
     let completedPlans = 0
@@ -64,7 +57,7 @@ export async function GET(_req: NextRequest) {
       const planProgress = progressEntries.filter(
         (p) => p.planId.toString() === plan._id.toString()
       )
-      const planBlockCount = plan.blocks?.length || 0
+      const planBlockCount = plan.tasks?.length || 0
       const planCompletedCount = planProgress.filter(
         (p) => p.status === 'completed'
       ).length
@@ -80,19 +73,19 @@ export async function GET(_req: NextRequest) {
       { total: number; completed: number; rate: number }
     > = {}
 
-    // Initialize categories
-    const categories = ['deep-work', 'communication', 'admin', 'personal', 'break']
+    // Updated categories
+    const categories = ['work', 'health', 'personal', 'learning', 'admin', 'creative']
     categories.forEach((cat) => {
       categoryBreakdown[cat] = { total: 0, completed: 0, rate: 0 }
     })
 
     // Aggregate by category
     for (const plan of plans) {
-      if (!plan.blocks) continue
+      if (!plan.tasks) continue
 
-      for (let i = 0; i < plan.blocks.length; i++) {
-        const block = plan.blocks[i]
-        const category = block.category || 'personal'
+      for (let i = 0; i < plan.tasks.length; i++) {
+        const task = plan.tasks[i]
+        const category = task.category || 'personal'
 
         if (!categoryBreakdown[category]) {
           categoryBreakdown[category] = { total: 0, completed: 0, rate: 0 }
@@ -100,13 +93,13 @@ export async function GET(_req: NextRequest) {
 
         categoryBreakdown[category].total++
 
-        const blockProgress = progressEntries.find(
+        const taskProgress = progressEntries.find(
           (p) =>
             p.planId.toString() === plan._id.toString() &&
             p.blockIndex === i
         )
 
-        if (blockProgress?.status === 'completed') {
+        if (taskProgress?.status === 'completed') {
           categoryBreakdown[category].completed++
         }
       }
@@ -133,11 +126,11 @@ export async function GET(_req: NextRequest) {
       const dateStr = date.toISOString().split('T')[0]
 
       // Find plans for this date
-      const dayPlans = plans.filter((p) => p.date === dateStr)
+      const dayPlans = plans.filter((p) => p.planDate.toISOString().split('T')[0] === dateStr)
       const dayPlanIds = dayPlans.map((p) => p._id.toString())
 
       const dayTotal = dayPlans.reduce(
-        (sum, p) => sum + (p.blocks?.length || 0),
+        (sum, p) => sum + (p.tasks?.length || 0),
         0
       )
 
@@ -157,7 +150,7 @@ export async function GET(_req: NextRequest) {
 
     // Build response
     const stats = {
-      totalPlans,
+      totalPlans: plans.length,
       completedPlans,
       totalBlocks,
       completedBlocks,
@@ -166,8 +159,8 @@ export async function GET(_req: NextRequest) {
       categoryBreakdown,
       weeklyProgress,
       streak: {
-        current: scoreData?.currentStreak || 0,
-        longest: scoreData?.longestStreak || 0,
+        current: user.streakCurrent || 0,
+        longest: user.streakLongest || 0,
       },
     }
 
