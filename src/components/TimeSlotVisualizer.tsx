@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Block } from '@/lib/types'
 import { formatDuration, timeToMinutes, minutesToTime } from '@/lib/timeValidation'
+import { cn } from '@/lib/utils'
 
 interface OccupiedSlot {
   startTime: string
@@ -168,30 +169,25 @@ export default function TimeSlotVisualizer({
   const getCategoryColor = (category: string) => {
     switch (category) {
       case 'deep-work':
-        return 'var(--accent)'
+        return 'hsl(var(--primary))'
       case 'communication':
-        return '#0fa8d8'
+        return 'hsl(var(--accent))'
       case 'admin':
-        return '#8888a0'
+        return 'hsl(var(--muted-foreground))'
       case 'personal':
-        return 'var(--accent-2)'
+        return 'hsl(var(--warning))'
       case 'break':
-        return '#f7be46'
+        return 'hsl(var(--success))'
       case 'available':
         return 'transparent'
       default:
-        return 'var(--muted)'
+        return 'hsl(var(--muted-foreground))'
     }
-  }
-
-  const formatTimeLabel = (time: string) => {
-    const [hours, minutes] = time.split(':')
-    return `${hours}:${minutes}`
   }
 
   // Generate hour markers
   const hourMarkers: number[] = []
-  for (let h = Math.ceil(dayStartMinutes / 60); h <= Math.floor(dayEndMinutes / 60); h++) {
+  for (let h = 0; h <= 24; h++) {
     const minutes = h * 60
     if (minutes >= dayStartMinutes && minutes <= dayEndMinutes) {
       hourMarkers.push(minutes)
@@ -199,67 +195,31 @@ export default function TimeSlotVisualizer({
   }
 
   return (
-    <div
-      style={{
-        width: '100%',
-        padding: '16px 0',
-      }}
-    >
+    <div className="w-full py-2">
       {/* Header with date */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 12,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: 'var(--text)',
-            fontFamily: 'Syne',
-          }}
-        >
+      <div className="flex justify-between items-center mb-3">
+        <span className="text-[11px] font-bold font-heading text-foreground uppercase tracking-wider">
           {date}
         </span>
-        <span
-          style={{
-            fontSize: 11,
-            color: 'var(--muted)',
-          }}
-        >
-          {dayStart} - {dayEnd}
+        <span className="text-[10px] font-medium text-muted-foreground tabular-nums">
+          {dayStart} — {dayEnd}
         </span>
       </div>
 
       {/* Timeline container */}
-      <div
-        style={{
-          position: 'relative',
-          height: 48,
-          background: 'var(--surface)',
-          borderRadius: 8,
-          border: '1px solid var(--border)',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="relative h-12 bg-muted/30 rounded-xl border border-border/50 overflow-hidden shadow-inner">
         {/* Hour markers */}
         {hourMarkers.map((minutes) => {
           const left = ((minutes - dayStartMinutes) / totalDayMinutes) * 100
+          const isMainHour = minutes % 60 === 0
           return (
             <div
               key={minutes}
-              style={{
-                position: 'absolute',
-                left: `${left}%`,
-                top: 0,
-                bottom: 0,
-                width: 1,
-                background: 'var(--border)',
-                opacity: 0.5,
-              }}
+              className={cn(
+                "absolute top-0 bottom-0 border-l transition-opacity",
+                isMainHour ? "border-border/30 opacity-100" : "border-border/10 opacity-50"
+              )}
+              style={{ left: `${left}%` }}
             />
           )
         })}
@@ -269,19 +229,13 @@ export default function TimeSlotVisualizer({
           availableGaps.map((gap, index) => (
             <div
               key={`gap-${index}`}
+              className={cn(
+                "absolute top-1 bottom-1 bg-primary/5 border border-dashed border-primary/20 rounded-lg transition-all",
+                interactive ? "cursor-pointer hover:bg-primary/10 hover:border-primary/40" : "cursor-default"
+              )}
               style={{
-                position: 'absolute',
                 left: `${gap.left}%`,
                 width: `${gap.width}%`,
-                top: 4,
-                bottom: 4,
-                background: 'rgba(124, 106, 247, 0.1)',
-                borderRadius: 4,
-                border: '1px dashed var(--accent)',
-                cursor: interactive ? 'pointer' : 'default',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
               }}
               onClick={() =>
                 onAvailableSlotClick?.({
@@ -293,19 +247,12 @@ export default function TimeSlotVisualizer({
               onMouseEnter={() => setHoveredSlot(gap)}
               onMouseLeave={() => setHoveredSlot(null)}
             >
-              {gap.width > 10 && (
-                <span
-                  style={{
-                    fontSize: 9,
-                    color: 'var(--accent)',
-                    fontWeight: 500,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {formatDuration(
-                    timeToMinutes(gap.endTime) - timeToMinutes(gap.startTime)
-                  )}
-                </span>
+              {gap.width > 12 && (
+                <div className="h-full flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-primary/60 whitespace-nowrap px-1">
+                    {formatDuration(timeToMinutes(gap.endTime) - timeToMinutes(gap.startTime))}
+                  </span>
+                </div>
               )}
             </div>
           ))}
@@ -314,20 +261,15 @@ export default function TimeSlotVisualizer({
         {occupiedPositions.map((slot, index) => (
           <div
             key={`occupied-${index}`}
+            className={cn(
+              "absolute top-1 bottom-1 rounded-lg shadow-sm transition-all",
+              interactive ? "cursor-pointer hover:brightness-110" : "cursor-default"
+            )}
             style={{
-              position: 'absolute',
               left: `${slot.left}%`,
               width: `${slot.width}%`,
-              top: 4,
-              bottom: 4,
-              background: getCategoryColor(slot.category),
-              borderRadius: 4,
-              opacity: 0.7,
-              cursor: interactive ? 'pointer' : 'default',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minWidth: 4,
+              backgroundColor: getCategoryColor(slot.category),
+              minWidth: '4px',
             }}
             onClick={() =>
               onSlotClick?.({
@@ -341,19 +283,11 @@ export default function TimeSlotVisualizer({
             onMouseLeave={() => setHoveredSlot(null)}
           >
             {slot.width > 15 && (
-              <span
-                style={{
-                  fontSize: 9,
-                  color: '#fff',
-                  fontWeight: 500,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  padding: '0 4px',
-                }}
-              >
-                {slot.label}
-              </span>
+              <div className="h-full flex items-center px-1.5 overflow-hidden">
+                <span className="text-[9px] font-bold text-white truncate drop-shadow-sm">
+                  {slot.label}
+                </span>
+              </div>
             )}
           </div>
         ))}
@@ -362,44 +296,30 @@ export default function TimeSlotVisualizer({
         {proposedPositions.map((slot, index) => (
           <div
             key={`proposed-${index}`}
+            className={cn(
+              "absolute rounded-lg transition-all z-10",
+              slot.isConflict
+                ? "top-0.5 bottom-0.5 bg-destructive/20 border-2 border-destructive animate-pulse"
+                : "top-1 bottom-1 bg-primary/20 border border-primary shadow-lg shadow-primary/10"
+            )}
             style={{
-              position: 'absolute',
               left: `${slot.left}%`,
               width: `${slot.width}%`,
-              top: slot.isConflict ? 2 : 4,
-              bottom: slot.isConflict ? 2 : 4,
-              background: slot.isConflict
-                ? 'rgba(247, 92, 106, 0.3)'
-                : 'rgba(124, 106, 247, 0.2)',
-              borderRadius: 4,
-              border: slot.isConflict
-                ? '2px solid #f75c6a'
-                : '1px solid var(--accent)',
-              cursor: 'default',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              minWidth: 4,
-              zIndex: slot.isConflict ? 10 : 5,
+              minWidth: '4px',
             }}
             onMouseEnter={() => setHoveredSlot(slot)}
             onMouseLeave={() => setHoveredSlot(null)}
           >
-            {slot.width > 10 && (
-              <span
-                style={{
-                  fontSize: 9,
-                  color: slot.isConflict ? '#f75c6a' : 'var(--accent)',
-                  fontWeight: slot.isConflict ? 600 : 500,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  padding: '0 4px',
-                }}
-              >
-                {slot.isConflict ? '⚠️ ' : ''}
-                {slot.label}
-              </span>
+            {slot.width > 12 && (
+              <div className="h-full flex items-center px-1.5 overflow-hidden">
+                <span className={cn(
+                  "text-[9px] font-bold truncate",
+                  slot.isConflict ? "text-destructive" : "text-primary"
+                )}>
+                  {slot.isConflict ? '⚠️ ' : '✨ '}
+                  {slot.label}
+                </span>
+              </div>
             )}
           </div>
         ))}
@@ -407,104 +327,45 @@ export default function TimeSlotVisualizer({
         {/* Hover tooltip */}
         {hoveredSlot && (
           <div
+            className="absolute -top-10 bg-popover border border-border rounded-lg px-2.5 py-1.5 shadow-xl z-50 pointer-events-none"
             style={{
-              position: 'absolute',
-              top: -40,
               left: `${hoveredSlot.left + hoveredSlot.width / 2}%`,
               transform: 'translateX(-50%)',
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 6,
-              padding: '6px 10px',
-              fontSize: 11,
-              color: 'var(--text)',
-              whiteSpace: 'nowrap',
-              zIndex: 100,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             }}
           >
-            <div style={{ fontWeight: 600 }}>{hoveredSlot.label}</div>
-            <div style={{ color: 'var(--muted)' }}>
-              {formatTimeLabel(hoveredSlot.startTime)} -{' '}
-              {formatTimeLabel(hoveredSlot.endTime)}
+            <div className="text-[11px] font-bold text-popover-foreground">{hoveredSlot.label}</div>
+            <div className="text-[9px] font-medium text-muted-foreground tabular-nums">
+              {hoveredSlot.startTime} — {hoveredSlot.endTime}
             </div>
           </div>
         )}
       </div>
 
       {/* Legend */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 16,
-          marginTop: 12,
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4">
         {occupiedSlots.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                background: 'var(--accent)',
-                borderRadius: 2,
-                opacity: 0.7,
-              }}
-            />
-            <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-              Occupied ({occupiedSlots.length})
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 bg-primary rounded-full" />
+            <span className="text-[10px] font-semibold text-muted-foreground">
+              Scheduled ({occupiedSlots.length})
             </span>
           </div>
         )}
 
         {proposedSlots.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                background: 'rgba(124, 106, 247, 0.2)',
-                border: '1px solid var(--accent)',
-                borderRadius: 2,
-              }}
-            />
-            <span style={{ fontSize: 11, color: 'var(--muted)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 bg-primary/30 border border-primary rounded-full" />
+            <span className="text-[10px] font-semibold text-primary">
               Proposed ({proposedSlots.length})
             </span>
           </div>
         )}
 
         {conflicts.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                background: 'rgba(247, 92, 106, 0.3)',
-                border: '2px solid #f75c6a',
-                borderRadius: 2,
-              }}
-            />
-            <span style={{ fontSize: 11, color: '#f75c6a', fontWeight: 600 }}>
+          <div className="flex items-center gap-2">
+            <div className="w-2.5 h-2.5 bg-destructive/30 border border-destructive rounded-full" />
+            <span className="text-[10px] font-bold text-destructive">
               Conflicts ({conflicts.length})
-            </span>
-          </div>
-        )}
-
-        {availableGaps.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                background: 'rgba(124, 106, 247, 0.1)',
-                border: '1px dashed var(--accent)',
-                borderRadius: 2,
-              }}
-            />
-            <span style={{ fontSize: 11, color: 'var(--muted)' }}>
-              Available ({availableGaps.length})
             </span>
           </div>
         )}

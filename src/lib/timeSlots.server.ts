@@ -56,6 +56,7 @@ export async function checkTimeConflicts(
           existingPlanDate: slot.date,
           existingBlockTitle: slot.blockTitle,
           existingTime: `${slot.startTime}-${slot.endTime}`,
+          existingPlanId: slot.planId.toString(),
         })
       }
     }

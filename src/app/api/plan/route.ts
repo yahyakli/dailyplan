@@ -5,10 +5,14 @@ import { parseSchedule } from '@/lib/parseSchedule'
 import { connectDB } from '@/lib/mongodb'
 import { Plan } from '@/models/Plan'
 import { User } from '@/models/User'
+import { AICache } from '@/models/AICache'
+import { AILog } from '@/models/AILog'
+import { sha256 } from '@/lib/hash'
 import {
   findInternalConflicts,
-  isValidTimeRange,
   calculateAvailableSlots,
+  timeToMinutes,
+  minutesToTime,
 } from '@/lib/timeValidation'
 import {
   checkTimeConflicts,
@@ -16,7 +20,9 @@ import {
   getOccupiedTimeSlots,
   deleteTimeSlotsForPlan,
 } from '@/lib/timeSlots.server'
-import type { Block } from '@/lib/types'
+import type { Block, GeneratedPlan } from '@/lib/types'
+import { calculateXP } from '@/lib/scoring'
+import { runBadgeCheck } from '@/lib/badges'
 
 import { getAIProvider } from '@/lib/ai'
 
@@ -24,76 +30,90 @@ export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   try {
-    const { tasks, startTime, endTime, context, date, locale } = await req.json()
+    const { tasks: braindump, startTime, endTime, context, date, locale, resolution } = await req.json()
+    const selectedTags = context ? context.split(',') : []
 
-    // Default to Groq
-    const providerId = 'groq'
-    const provider = getAIProvider(providerId)
+    // 1. Authentication & Rate Limiting
+    const session = await auth()
+    await connectDB()
+    
+    let userId: string | null = null
+    let user = null
+    let guestSessionId = req.cookies.get('guestSessionId')?.value || 'anonymous'
+    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1'
 
-    const apiKey = process.env.GROQ_API_KEY
-    if (!apiKey) {
-      console.error('GROQ_API_KEY is not configured on the server.')
+    if (session?.user?.email) {
+      user = await User.findOne({ email: session.user.email })
+      if (user) userId = user._id.toString()
+    }
+
+    // Daily Limit Check
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    
+    const generationCount = await AILog.countDocuments({
+      $or: userId ? [{ userId }] : [{ guestSessionId }, { ip }],
+      createdAt: { $gte: todayStart }
+    })
+
+    const limit = userId ? 10 : 3
+    if (generationCount >= limit) {
       return NextResponse.json(
-        { error: 'AI generation is currently unavailable. Please contact the administrator.' },
-        { status: 503 }
+        { error: `Daily limit reached (${limit} generations). Please try again tomorrow.` },
+        { status: 429 }
       )
     }
 
-    if (!tasks || !startTime || !endTime) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
+    // 2. Prompt Caching
+    const promptString = `${braindump}|${date}|${startTime}|${endTime}|${context}|${locale}`
+    const promptHash = sha256(promptString)
+    
+    const cachedResponse = await AICache.findOne({ promptHash })
+    let planData: GeneratedPlan
 
-    // Validate time range
-    if (!isValidTimeRange(startTime, endTime)) {
-      return NextResponse.json(
-        { error: 'End time must be after start time' },
-        { status: 400 }
-      )
-    }
+    if (cachedResponse) {
+      console.log('Serving AI response from cache')
+      planData = cachedResponse.response
+    } else {
+      // 3. AI Generation
+      const providerId = 'groq'
+      const provider = getAIProvider(providerId)
+      const apiKey = process.env.GROQ_API_KEY
 
-    // Build prompt
-    const { systemPrompt, userPrompt } = buildPrompt(
-      tasks,
-      startTime,
-      endTime,
-      context,
-      date,
-      locale
-    )
-
-    let aiResponse;
-    try {
-      aiResponse = await provider.generateResponse({ systemPrompt, userPrompt }, apiKey)
-    } catch (err: any) {
-      console.error(`${provider.name} API error:`, err)
-      let message = err.message || `${provider.name} API error`
-
-      if (message.includes('401') || message.toLowerCase().includes('invalid')) {
-        message = `Invalid ${provider.name} API key configured.`
-      } else if (message.includes('429')) {
-        message = 'Rate limit exceeded. Please try again in a moment.'
-      } else if (message.toLowerCase().includes('moderation') || message.toLowerCase().includes('policy')) {
-        message = 'Moderation policy violation.'
+      if (!apiKey) {
+        return NextResponse.json(
+          { error: 'AI generation is currently unavailable. Please contact the administrator.' },
+          { status: 503 }
+        )
       }
 
-      return NextResponse.json({ error: message }, { status: 500 })
+      const { systemPrompt, userPrompt } = buildPrompt(braindump, startTime, endTime, context, date, locale)
+      const aiResponse = await provider.generateResponse({ systemPrompt, userPrompt }, apiKey)
+      planData = parseSchedule(aiResponse.content)
+
+      // Save to cache
+      await AICache.create({ promptHash, response: planData })
+
+      // Log generation
+      await AILog.create({
+        userId,
+        guestSessionId: userId ? undefined : guestSessionId,
+        ip,
+        model: 'llama-3.1-70b-versatile',
+        tokens: aiResponse.usage?.totalTokens || 0
+      })
     }
 
-    const plan = parseSchedule(aiResponse.content)
-
+    // 4. Post-processing & Validation
     // Programmatic gap enforcement (ensure 10m gap)
-    plan.blocks.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
-    for (let i = 0; i < plan.blocks.length - 1; i++) {
-      const current = plan.blocks[i]
-      const next = plan.blocks[i + 1]
+    planData.tasks.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime))
+    for (let i = 0; i < planData.tasks.length - 1; i++) {
+      const current = planData.tasks[i]
+      const next = planData.tasks[i + 1]
       const currentEndMins = timeToMinutes(current.endTime)
       const nextStartMins = timeToMinutes(next.startTime)
       
       if (nextStartMins < currentEndMins + 10) {
-        // Shift next block start time to ensure 10m gap
         const newStartMins = currentEndMins + 10
         const duration = timeToMinutes(next.endTime) - nextStartMins
         next.startTime = minutesToTime(newStartMins)
@@ -101,173 +121,113 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Validate blocks have valid time ranges and stay within day boundaries
+    // Validate boundaries
     const dayEndMins = timeToMinutes(endTime)
-    for (const block of plan.blocks) {
-      if (!isValidTimeRange(block.startTime, block.endTime)) {
-        return NextResponse.json(
-          { error: `Invalid time range for block: ${block.title}` },
-          { status: 400 }
-        )
-      }
-      if (timeToMinutes(block.endTime) > dayEndMins) {
-        plan.overflow.push(block.title)
-        plan.blocks = plan.blocks.filter(b => b !== block)
-      }
-    }
+    const validTasks = planData.tasks.filter(t => timeToMinutes(t.endTime) <= dayEndMins)
+    const overflow = planData.tasks.filter(t => timeToMinutes(t.endTime) > dayEndMins).map(t => t.title)
 
-    // Check for internal conflicts (blocks overlapping within the plan)
-    const internalConflicts = findInternalConflicts(plan.blocks)
+    // Check internal conflicts
+    const blocksAsBlocks: Block[] = validTasks.map((t, i) => ({
+      ...t,
+      status: 'todo',
+      xpValue: t.xpValue || 10,
+      order: i,
+    }))
+
+    const internalConflicts = findInternalConflicts(blocksAsBlocks)
     if (internalConflicts.length > 0) {
-      const occupied = plan.blocks.map(b => ({ startTime: b.startTime, endTime: b.endTime }))
-      const available = calculateAvailableSlots(startTime, endTime, occupied, 15)
-      
-      const conflictDetails = internalConflicts
-        .map((c) => {
-          const b1 = plan.blocks[c.index1]
-          const b2 = plan.blocks[c.index2]
-          return `${b1.title} (${b1.startTime}-${b1.endTime}) overlaps with ${b2.title} (${b2.startTime}-${b2.endTime})`
-        })
-        .join('; ')
-
-      return NextResponse.json(
-        {
-          error: 'Generated schedule has overlapping blocks',
-          details: conflictDetails,
-          suggestion: available.length > 0 
-            ? `Try manually adjusting these blocks. Available gaps: ${available.map(s => `${s.startTime}-${s.endTime}`).join(', ')}`
-            : 'The tasks are too tightly packed. Try reducing the number of tasks.'
-        },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Generated schedule has internal conflicts' }, { status: 400 })
     }
 
-    // Check if user is authenticated
-    const session = await auth()
-    let userId: string | null = null
+    // 5. External Conflict Detection
     let existingPlanId: string | null = null
-
-    if (session?.user?.email) {
-      await connectDB()
-      const user = await User.findOne({ email: session.user.email })
-      if (user) {
-        userId = user._id.toString()
-
-        // Check for existing plan on this date
-        const existingPlan = await Plan.findOne({
-          userId: user._id,
-          date: plan.date,
-        })
-
-        if (existingPlan) {
-          existingPlanId = existingPlan._id.toString()
-        }
-      }
+    if (userId) {
+      const existingPlan = await Plan.findOne({ userId, planDate: new Date(date) })
+      if (existingPlan) existingPlanId = existingPlan._id.toString()
     }
 
-    // Check for time conflicts with other plans
-    if (userId) {
-      const { hasConflicts, conflicts } = await checkTimeConflicts(
-        userId,
-        plan.date,
-        plan.blocks,
-        existingPlanId || undefined
-      )
-
+    if (userId && resolution !== 'replace') {
+      const { hasConflicts, conflicts } = await checkTimeConflicts(userId, date, blocksAsBlocks, existingPlanId || undefined)
       if (hasConflicts) {
-        // Get available slots for suggestions
-        const occupiedSlots = conflicts.map((c) => ({
+        const occupied = conflicts.map(c => ({
           startTime: c.existingTime.split('-')[0],
           endTime: c.existingTime.split('-')[1],
         }))
+        const availableSlots = calculateAvailableSlots(startTime, endTime, occupied, 30)
 
-        const availableSlots = calculateAvailableSlots(
-          startTime,
-          endTime,
-          occupiedSlots,
-          30
-        )
-
-        return NextResponse.json(
-          {
-            error: 'Time conflict detected',
-            conflicts: conflicts.map((c) => ({
-              blockTitle: c.blockTitle,
-              blockTime: c.blockTime,
-              existingPlanDate: c.existingPlanDate,
-              existingBlockTitle: c.existingBlockTitle,
-              existingTime: c.existingTime,
-            })),
-            suggestion:
-              availableSlots.length > 0
-                ? `Available time slots: ${availableSlots
-                    .map((s) => `${s.startTime}-${s.endTime} (${s.duration}min)`)
-                    .join(', ')}`
-                : 'No available time slots in your selected range',
-          },
-          { status: 409 }
-        )
+        return NextResponse.json({
+          error: 'Time conflict detected',
+          conflicts,
+          availableSlots,
+          suggestion: availableSlots.length > 0 ? `Available: ${availableSlots.map(s => `${s.startTime}-${s.endTime}`).join(', ')}` : 'No gaps found'
+        }, { status: 409 })
       }
     }
 
-    // If authenticated, save plan to MongoDB
+    // 6. Persistence
     if (userId) {
-      await connectDB()
-      const user = await User.findOne({ email: session!.user!.email })
-      if (user) {
-        // Archive existing plans for this date
-        const existingPlans = await Plan.find({ userId: user._id, date: plan.date, isArchived: false })
-        
-        if (existingPlans.length > 0) {
-          await Plan.updateMany(
-            { userId: user._id, date: plan.date, isArchived: false },
-            { isArchived: true }
-          )
-          
-          // Delete time slots for archived plans to avoid conflicts with the new one
-          for (const oldPlan of existingPlans) {
-            await deleteTimeSlotsForPlan(oldPlan._id.toString())
-          }
-        }
+      // If resolution is replace, or we just want to ensure one plan per date
+      await Plan.deleteMany({ userId, planDate: new Date(date) })
+      // deleteMany doesn't trigger hooks, so delete slots manually
+      if (existingPlanId) await deleteTimeSlotsForPlan(existingPlanId)
 
-        // Create new plan
-        const savedPlan = await Plan.create({
-          ...plan,
-          userId: user._id,
-          rawInput: tasks,
-          isArchived: false
-        })
+      const savedPlan = await Plan.create({
+        userId,
+        title: planData.planTitle,
+        braindump,
+        planDate: new Date(date),
+        startTime,
+        endTime,
+        contextTags: selectedTags,
+        tasks: blocksAsBlocks,
+        status: 'draft',
+        totalXPEarned: 0,
+        completionRate: 0,
+        isGuestPlan: false
+      })
 
-        // Create time slots for the new plan blocks
-        if (savedPlan && savedPlan.blocks.length > 0) {
-          await createTimeSlots(
-            userId,
-            savedPlan._id.toString(),
-            plan.date,
-            savedPlan.blocks as Block[]
-          )
-        }
-      }
+      await createTimeSlots(userId, savedPlan._id.toString(), date, blocksAsBlocks)
+      
+      // 7. Gamification: Reward plan creation
+      const { xp, reason } = calculateXP('plan_created')
+      user.points += xp
+      await user.save()
+
+      await XPLog.create({
+        userId,
+        xp,
+        reason,
+        earnedAt: new Date()
+      })
+
+      const { newBadges } = await runBadgeCheck(userId)
+
+      // Return the saved plan format
+      return NextResponse.json({
+        ...savedPlan.toObject(),
+        overflow,
+        aiTip: planData.aiTip,
+        newBadges: newBadges.length > 0 ? newBadges : undefined,
+        pointsEarned: xp
+      })
     }
 
-    return NextResponse.json(plan)
-  } catch (err: unknown) {
+    // Guest response
+    return NextResponse.json({
+      title: planData.planTitle,
+      planDate: date,
+      startTime,
+      endTime,
+      tasks: blocksAsBlocks,
+      overflow,
+      aiTip: planData.aiTip,
+      status: 'draft',
+      isGuestPlan: true
+    })
+
+  } catch (err: any) {
     console.error('Plan API error:', err)
-    const message = err instanceof Error ? err.message : 'Failed to generate schedule'
-
-    // Bubble up parsing and format errors to frontend
-    if (
-      message.includes('Unexpected token') ||
-      message.includes('Invalid schedule') ||
-      message.includes('JSON')
-    ) {
-      return NextResponse.json(
-        { error: 'Invalid schedule format from AI.' },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 })
   }
 }
 

@@ -59,7 +59,7 @@ export default function Navbar() {
   ) : session?.user?.name ? (
     <div style={{
       width: 28, height: 28, borderRadius: '50%',
-      background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+      background: 'linear-gradient(135deg, var(--accent), var(--primary))',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0,
     }}>
@@ -73,8 +73,8 @@ export default function Navbar() {
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : '#d1d1e0'}`,
-        background: isDark ? 'rgba(10,10,15,0.9)' : 'rgba(255,255,255,0.85)',
+        borderBottom: '1px solid var(--border)',
+        background: 'hsl(var(--background) / 0.85)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         padding: '0 clamp(16px, 4vw, 24px)',
@@ -86,9 +86,9 @@ export default function Navbar() {
       }}>
         {/* Logo */}
         <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          <span style={{ fontSize: 'clamp(16px, 4vw, 20px)', fontFamily: 'Syne', fontWeight: 800, letterSpacing: '-0.03em' }}>
+          <span style={{ fontSize: 'clamp(16px, 4vw, 20px)', fontFamily: 'var(--font-sans)', fontWeight: 800, letterSpacing: '-0.03em' }}>
             <span className="gradient-text">daily</span>
-            <span style={{ color: 'var(--text)' }}>plan</span>
+            <span style={{ color: 'var(--foreground)' }}>plan</span>
           </span>
         </Link>
 
@@ -109,10 +109,10 @@ export default function Navbar() {
                 onClick={() => setProfileMenuOpen(!profileMenuOpen)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
-                  background: isDark ? 'var(--surface)' : '#efefff',
-                  border: `1px solid ${isDark ? 'var(--border)' : '#d1d1e0'}`,
+                  background: 'var(--muted)',
+                  border: '1px solid var(--border)',
                   borderRadius: 24, padding: '4px 12px 4px 6px',
-                  cursor: 'pointer', color: 'var(--text)',
+                  cursor: 'pointer', color: 'var(--foreground)',
                 }}
               >
                 {avatarEl}
@@ -143,7 +143,7 @@ export default function Navbar() {
                       color: 'var(--muted)',
                       cursor: 'pointer', borderRadius: 6, fontSize: 13,
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--foreground)')}
                     onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
                   >
                     {t('nav.signOut')}
@@ -196,7 +196,7 @@ export default function Navbar() {
               background: isDark ? 'rgba(255,255,255,0.06)' : '#efefff',
               border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#d1d1e0'}`,
               borderRadius: 8, padding: 7,
-              cursor: 'pointer', color: 'var(--text)',
+              cursor: 'pointer', color: 'var(--foreground)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'background 0.15s',
             }}
@@ -250,7 +250,7 @@ export default function Navbar() {
             }}>
               {avatarEl}
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {session.user?.name}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -320,20 +320,20 @@ export default function Navbar() {
 function NavLink({ href, children, active }: { href: string; children: React.ReactNode; active?: boolean }) {
   return (
     <Link href={href} style={{
-      color: active ? 'var(--text)' : 'var(--muted)',
+      color: active ? 'var(--foreground)' : 'var(--muted)',
       background: active ? 'rgba(124,106,247,0.08)' : 'transparent',
       fontSize: 13, fontWeight: active ? 600 : 500,
       padding: '6px 12px', borderRadius: 8, textDecoration: 'none',
       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
       border: active ? '1px solid rgba(124,106,247,0.15)' : '1px solid transparent',
     }}
-      onMouseEnter={e => {
+      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
         if (!active) {
-          e.currentTarget.style.color = 'var(--text)'
+          e.currentTarget.style.color = 'var(--foreground)'
           e.currentTarget.style.background = 'rgba(124,106,247,0.04)'
         }
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
         if (!active) {
           e.currentTarget.style.color = 'var(--muted)'
           e.currentTarget.style.background = 'transparent'
@@ -348,17 +348,17 @@ function NavLink({ href, children, active }: { href: string; children: React.Rea
 function MobileNavLink({ href, children, onClick, icon, active }: { href: string; children: React.ReactNode; onClick: () => void; icon?: React.ReactNode; active?: boolean }) {
   return (
     <Link href={href} onClick={onClick} style={{
-      color: active ? 'var(--accent)' : 'var(--text)', 
+      color: active ? 'var(--accent)' : 'var(--foreground)', 
       background: active ? 'rgba(124,106,247,0.08)' : 'transparent',
       fontSize: 14, fontWeight: active ? 700 : 500,
       padding: '12px 14px', borderRadius: 12, textDecoration: 'none',
       transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 12,
       border: active ? '1px solid rgba(124,106,247,0.2)' : '1px solid transparent',
     }}
-      onMouseEnter={e => {
+      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
         if (!active) e.currentTarget.style.background = 'rgba(124,106,247,0.06)'
       }}
-      onMouseLeave={e => {
+      onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
         if (!active) e.currentTarget.style.background = 'transparent'
       }}
     >
@@ -383,8 +383,8 @@ function DropdownLink({ href, children, onClick }: { href: string; children: Rea
       textDecoration: 'none', borderRadius: 6, fontSize: 13,
       transition: 'color 0.15s, background 0.15s',
     }}
-      onMouseEnter={e => { e.currentTarget.style.color = 'var(--text)'; e.currentTarget.style.background = 'rgba(124,106,247,0.05)' }}
-      onMouseLeave={e => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
+      onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = 'var(--foreground)'; e.currentTarget.style.background = 'rgba(124,106,247,0.05)' }}
+      onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = 'var(--muted)'; e.currentTarget.style.background = 'transparent' }}
     >
       {children}
     </Link>

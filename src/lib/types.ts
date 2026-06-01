@@ -32,6 +32,20 @@ export interface Plan {
   createdAt?: string
 }
 
+export interface GeneratedPlan {
+  planTitle: string
+  tasks: Array<{
+    title: string
+    description?: string
+    startTime: string
+    endTime: string
+    category: 'work' | 'health' | 'personal' | 'learning' | 'admin' | 'creative'
+    priority: 'low' | 'medium' | 'high' | 'critical'
+    xpValue: number
+  }>
+  aiTip: string
+}
+
 // ─── User & Auth Types ────────────────────────────────────────────────────────
 
 export interface UserProfile {

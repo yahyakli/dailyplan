@@ -11,6 +11,7 @@ export interface ConflictInfo {
   existingPlanDate: string
   existingBlockTitle: string
   existingTime: string
+  existingPlanId?: string
 }
 
 export interface AvailableSlot {

@@ -28,15 +28,15 @@ All work will be conducted in the `remake` parent branch, with feature-specific 
 ### Sprint 1: Foundation (Infrastructure & Data)
 **Goal:** Establish the core data structures and internationalization framework.
 
-- [ ] **Task 1.1: Database Schema Migration (`remake/db-schema`)**
+- [x] **Task 1.1: Database Schema Migration (`remake/db-schema`)**
   - Update `User` model (points, streaks, badges, locale, theme).
   - Update `Plan` model (braindump, planDate, window, contextTags, tasks sub-doc).
   - Create `Badge` and `XPLog` collections.
-- [ ] **Task 1.2: NextAuth v5 Upgrade (`remake/auth`)**
+- [x] **Task 1.2: NextAuth v5 Upgrade (`remake/auth`)**
   - Implement Google OAuth 2.0 and Email/Password provider.
   - Setup password reset flow with Resend.
   - Implement route protection rules.
-- [ ] **Task 1.3: Advanced i18n Setup (`remake/i18n`)**
+- [x] **Task 1.3: Advanced i18n Setup (`remake/i18n`)**
   - Implement `app/[locale]/` directory structure.
   - Configure `next-intl` middleware and translation files (`en`, `fr`, `ar`).
   - Implement RTL layout support for Arabic.
@@ -44,17 +44,17 @@ All work will be conducted in the `remake` parent branch, with feature-specific 
 ### Sprint 2: Core UX & Logic (The Planning Engine)
 **Goal:** Deliver the AI-powered planning experience with conflict resolution.
 
-- [ ] **Task 2.1: Design System & Theme (`remake/design-system`)**
+- [x] **Task 2.1: Design System & Theme (`remake/design-system`)**
   - Setup Tailwind CSS variables for light/dark/system themes.
   - Integrate `Geist` and `Noto Kufi Arabic` fonts.
   - Refine shadcn/ui components for consistency.
-- [ ] **Task 2.2: Plan Page & Visual Timeline (`remake/plan-page`)**
+- [x] **Task 2.2: Plan Page & Visual Timeline (`remake/plan-page`)**
   - Build the Braindump textarea and Date/Time pickers.
   - Implement the "Schedule Overview" 24-hr timeline.
-- [ ] **Task 2.3: Conflict Detection Logic (`remake/conflict-logic`)**
+- [x] **Task 2.3: Conflict Detection Logic (`remake/conflict-logic`)**
   - Implement server-side and client-side overlap detection.
   - Build the conflict resolution UI (Adjust Window, Replace, Merge).
-- [ ] **Task 2.4: Groq AI Integration (`remake/ai-integration`)**
+- [x] **Task 2.4: Groq AI Integration (`remake/ai-integration`)**
   - Setup Groq SDK with LLaMA-3.1-70b-versatile.
   - Implement the "Expert Productivity Coach" prompt and Zod validation.
   - Add prompt caching and rate limiting.

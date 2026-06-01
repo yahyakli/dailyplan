@@ -3,7 +3,7 @@ import { auth } from '@/auth'
 import { connectDB } from '@/lib/mongodb'
 import { User } from '@/models/User'
 import { Plan } from '@/models/Plan'
-import { Score } from '@/models/Score'
+import { XPLog } from '@/models/XPLog'
 import {
   BlockProgress,
   updateBlockProgress,
@@ -11,7 +11,8 @@ import {
   canUndoBlockCompletion,
   undoBlockCompletion,
 } from '@/models/BlockProgress'
-// Time utilities not needed in this route
+import { calculateXP } from '@/lib/scoring'
+import { runBadgeCheck } from '@/lib/badges'
 
 export const runtime = 'nodejs'
 
@@ -32,6 +33,8 @@ interface ProgressResponse {
   startedAt?: Date
   completedAt?: Date
   pointsEarned?: number
+  newBadges?: any[]
+  totalPoints: number
   canUndo?: boolean
   undoWindowRemaining?: number
 }
@@ -176,7 +179,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const block = plan.blocks[blockIndex]
+    const block = plan.tasks[blockIndex] // Use plan.tasks instead of blocks
     const userId = user._id.toString()
     const planId = plan._id.toString()
 
@@ -186,18 +189,25 @@ export async function POST(req: NextRequest) {
         const progress = await undoBlockCompletion(userId, planId, blockIndex)
 
         // Deduct points for undoing completion
-        const score = await Score.findOne({ userId })
-        if (score) {
-          const pointsToDeduct = calculateBlockPoints(block, true)
-          score.totalPoints = Math.max(0, score.totalPoints - pointsToDeduct)
-          await score.save()
+        const { xp } = calculateXP('task_complete', { priority: block.priority })
+        if (xp > 0) {
+          user.points = Math.max(0, user.points - xp)
+          await user.save()
+          
+          await XPLog.create({
+            userId,
+            xp: -xp,
+            reason: `Reverted completion: ${block.title}`,
+            earnedAt: new Date()
+          })
         }
 
         return NextResponse.json({
           blockIndex,
           status: progress.status,
           completionPercentage: progress.completionPercentage,
-          pointsDeducted: calculateBlockPoints(block, true),
+          pointsDeducted: xp,
+          totalPoints: user.points,
         })
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Failed to undo'
@@ -229,7 +239,7 @@ export async function POST(req: NextRequest) {
     } else if (status === 'pending') {
       finalCompletionPercentage = 0
     } else if (status === 'in_progress' && !completionPercentage) {
-      finalCompletionPercentage = 50 // Default to 50% if not specified
+      finalCompletionPercentage = 50 
     }
 
     // Update progress
@@ -246,43 +256,50 @@ export async function POST(req: NextRequest) {
 
     if (status === 'completed' && currentStatus !== 'completed') {
       isNewCompletion = true
-      pointsEarned = calculateBlockPoints(block, false)
+      const { xp, reason } = calculateXP('task_complete', { priority: block.priority })
+      pointsEarned = xp
 
-      // Update score
-      const score = await Score.findOne({ userId })
-      if (score) {
-        score.totalPoints += pointsEarned
-        score.weeklyPoints += pointsEarned
-        await score.save()
-      }
-    } else if (status === 'in_progress' && currentStatus === 'pending') {
-      // Small bonus for starting a task
-      pointsEarned = 2
-      const score = await Score.findOne({ userId })
-      if (score) {
-        score.totalPoints += pointsEarned
-        score.weeklyPoints += pointsEarned
-        await score.save()
-      }
+      user.points += pointsEarned
+      await user.save()
+
+      await XPLog.create({
+        userId,
+        xp: pointsEarned,
+        reason: `${reason}: ${block.title}`,
+        earnedAt: new Date()
+      })
     }
 
     // Check if all blocks are completed
     const allProgress = await getPlanProgress(userId, planId)
-    const allCompleted = plan.blocks.every(
-      (block: any, idx: number) => allProgress.find((p) => p.blockIndex === idx)?.status === 'completed'
-    )
-
-    if (allCompleted) {
-      // Bonus for completing entire plan
-      const planCompletionBonus = 10
-      const score = await Score.findOne({ userId })
-      if (score) {
-        score.totalPoints += planCompletionBonus
-        score.weeklyPoints += planCompletionBonus
-        await score.save()
+    const completedCount = allProgress.filter(p => p.status === 'completed').length
+    const completionRate = Math.round((completedCount / plan.tasks.length) * 100)
+    
+    // Update plan completion rate
+    plan.completionRate = completionRate
+    if (completionRate >= 90 && plan.status !== 'completed') {
+      plan.status = 'completed'
+      const { xp, reason } = calculateXP('plan_completed', { 
+        completionRate, 
+        isPerfect: completionRate === 100 
+      })
+      
+      if (xp > 0) {
+        user.points += xp
+        pointsEarned += xp
+        await user.save()
+        await XPLog.create({
+          userId,
+          xp,
+          reason,
+          earnedAt: new Date()
+        })
       }
-      pointsEarned += planCompletionBonus
     }
+    await plan.save()
+
+    // Trigger Badge Check
+    const { newBadges } = await runBadgeCheck(userId)
 
     // Check undo availability
     const { canUndo, completedAt } =
@@ -303,7 +320,9 @@ export async function POST(req: NextRequest) {
       completionPercentage: progress.completionPercentage,
       startedAt: progress.startedAt,
       completedAt: progress.completedAt,
-      pointsEarned: isNewCompletion ? pointsEarned : undefined,
+      pointsEarned: pointsEarned > 0 ? pointsEarned : undefined,
+      newBadges: newBadges.length > 0 ? newBadges : undefined,
+      totalPoints: user.points,
       canUndo,
       undoWindowRemaining: canUndo ? Math.round(undoWindowRemaining) : undefined,
     }
@@ -315,35 +334,6 @@ export async function POST(req: NextRequest) {
       err instanceof Error ? err.message : 'Failed to update progress'
     return NextResponse.json({ error: message }, { status: 500 })
   }
-}
-
-/**
- * Calculate points for a block
- */
-function calculateBlockPoints(
-  block: { category: string; priority: string },
-  isUndo: boolean
-): number {
-  if (isUndo) {
-    // Return the same points that were awarded
-    let points = 5 // Base
-    if (block.priority === 'high') points += 5
-    if (block.category === 'deep-work') points += 2
-    return points
-  }
-
-  // Award points
-  let points = 5 // Base for completing any task
-
-  if (block.priority === 'high') {
-    points += 5 // Bonus for high priority
-  }
-
-  if (block.category === 'deep-work') {
-    points += 2 // Bonus for deep work
-  }
-
-  return points
 }
 
 /**

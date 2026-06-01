@@ -3,12 +3,13 @@ import { Providers } from './providers'
 import Navbar from '@/components/Navbar'
 import JsonLd from '@/components/JsonLd'
 import './globals.css'
-import { Geist, Noto_Kufi_Arabic } from "next/font/google";
+import { Geist, Geist_Mono, Noto_Kufi_Arabic } from "next/font/google";
 import { cn } from "@/lib/utils";
-import { getMessages, unstable_setRequestLocale } from 'next-intl/server';
+import { getMessages } from 'next-intl/server';
 import { locales } from '@/i18n/config';
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
 const notoKufi = Noto_Kufi_Arabic({ subsets: ['arabic'], variable: '--font-arabic' });
 
 export function generateStaticParams() {
@@ -66,13 +67,12 @@ export default async function RootLayout({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params;
-  unstable_setRequestLocale(locale);
   const messages = await getMessages();
 
   const isRtl = locale === 'ar';
 
   return (
-    <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} suppressHydrationWarning className={cn("font-sans", geist.variable, notoKufi.variable)}>
+    <html lang={locale} dir={isRtl ? 'rtl' : 'ltr'} suppressHydrationWarning className={cn("font-sans", geist.variable, geistMono.variable, notoKufi.variable)}>
       <body suppressHydrationWarning className={locale === 'ar' ? 'font-arabic' : 'font-sans'}>
         <Providers messages={messages} locale={locale}>
           <JsonLd />

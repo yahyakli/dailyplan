@@ -2,6 +2,7 @@
 import type { Badge } from '@/lib/types'
 import BadgeIcon from './BadgeIcon'
 import { useTranslations } from 'next-intl'
+import { cn } from '@/lib/utils'
 
 interface BadgeCardProps {
   badge: Badge
@@ -16,87 +17,43 @@ export default function BadgeCard({ badge, unlocked = false, unlockedAt, progres
 
   return (
     <div
-      className={unlocked ? 'badge-card-unlocked' : 'badge-card-locked'}
-      style={{
-        padding: '14px 16px',
-        borderRadius: 12,
-        background: unlocked ? 'rgba(124,106,247,0.08)' : 'var(--surface)',
-        border: `1px solid ${unlocked ? 'rgba(124,106,247,0.3)' : 'var(--border)'}`,
-        opacity: unlocked ? 1 : 0.55,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-        cursor: 'default',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = unlocked
-          ? '0 4px 20px rgba(124,106,247,0.15)'
-          : '0 2px 8px rgba(0,0,0,0.1)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = 'none'
-      }}
+      className={cn(
+        "group relative flex items-center gap-3 overflow-hidden rounded-xl border p-4 transition-all duration-250 ease-in-out cursor-default",
+        unlocked 
+          ? "badge-card-unlocked bg-primary/5 border-primary/20 opacity-100 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10" 
+          : "badge-card-locked bg-muted border-border opacity-60 hover:-translate-y-0.5 hover:shadow-md hover:shadow-foreground/5"
+      )}
     >
-      {/* Emoji */}
-      <div style={{
-        filter: unlocked ? 'none' : 'grayscale(1)',
-        opacity: unlocked ? 1 : 0.6,
-        transition: 'filter 0.3s, opacity 0.3s',
-        flexShrink: 0,
-        width: 36,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: unlocked ? 'var(--accent)' : 'var(--muted)'
-      }}>
+      {/* Emoji / Icon */}
+      <div className={cn(
+        "flex shrink-0 items-center justify-center transition-all duration-300",
+        unlocked ? "text-primary opacity-100" : "text-muted-foreground grayscale opacity-60"
+      )}>
         <BadgeIcon name={badge.iconName} size={28} strokeWidth={2} />
       </div>
 
       {/* Text content */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{
-          fontFamily: 'Syne',
-          fontWeight: 600,
-          fontSize: 13,
-          marginBottom: 2,
-          color: unlocked ? 'var(--text)' : 'var(--muted)',
-        }}>
+      <div className="flex-1 min-w-0">
+        <div className={cn(
+          "font-heading text-[13px] font-semibold mb-0.5",
+          unlocked ? "text-foreground" : "text-muted-foreground"
+        )}>
           {badge.label}
         </div>
-        <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: showProgress ? 6 : 0 }}>
+        <div className="text-xs text-muted-foreground line-clamp-2">
           {badge.description}
         </div>
 
         {/* Progress bar for locked badges */}
         {showProgress && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{
-              flex: 1,
-              height: 4,
-              borderRadius: 2,
-              background: 'var(--border)',
-              overflow: 'hidden',
-            }}>
-              <div className="progress-fill" style={{
-                width: `${progress.percentage}%`,
-                height: '100%',
-                borderRadius: 2,
-                background: 'linear-gradient(90deg, var(--accent), var(--accent-2))',
-                transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-              }} />
+          <div className="mt-2 flex items-center gap-2">
+            <div className="relative h-1 flex-1 overflow-hidden rounded-full bg-border">
+              <div 
+                className="progress-fill absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-600 ease-in-out" 
+                style={{ width: `${progress.percentage}%` }}
+              />
             </div>
-            <span style={{
-              fontSize: 10,
-              color: 'var(--muted)',
-              fontFamily: 'Syne',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-            }}>
+            <span className="font-heading text-[10px] font-semibold text-muted-foreground whitespace-nowrap">
               {progress.current}/{progress.target}
             </span>
           </div>
@@ -104,33 +61,21 @@ export default function BadgeCard({ badge, unlocked = false, unlockedAt, progres
       </div>
 
       {/* Status indicator */}
-      <div style={{ marginLeft: 'auto', flexShrink: 0, textAlign: 'right' }}>
+      <div className="ml-auto shrink-0 text-right">
         {unlocked ? (
           <div>
-            <div style={{
-              fontSize: 10,
-              color: 'var(--accent)',
-              fontWeight: 600,
-              fontFamily: 'Syne',
-              textTransform: 'uppercase',
-              letterSpacing: '0.04em',
-            }}>
+            <div className="font-heading text-[10px] font-semibold text-primary uppercase tracking-wider">
               ✓ {t('badges.unlocked')}
             </div>
             {unlockedAt && (
-              <div style={{ fontSize: 9, color: 'var(--muted)', marginTop: 2 }}>
+              <div className="mt-0.5 text-[9px] text-muted-foreground">
                 {new Date(unlockedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </div>
             )}
           </div>
         ) : (
-          <div style={{
-            width: 24, height: 24, borderRadius: '50%',
-            border: '1px solid var(--border)',
-            background: 'var(--surface)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <BadgeIcon name="Lock" size={12} strokeWidth={2.5} color="var(--muted)" />
+          <div className="flex h-6 w-6 items-center justify-center rounded-full border border-border bg-background">
+            <BadgeIcon name="Lock" size={12} strokeWidth={2.5} className="text-muted-foreground" />
           </div>
         )}
       </div>

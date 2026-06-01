@@ -1,14 +1,20 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { savePlanLocally, getGuestPlanCount } from '@/lib/storage'
 import { useSession } from 'next-auth/react'
 import { toast } from 'sonner'
-import type { Plan, Badge, Block } from '@/lib/types'
+import type { Plan, Badge } from '@/lib/types'
 import { useTranslations, useLocale } from 'next-intl'
-import { Star, AlertTriangle, Clock, Calendar, Info, Sparkles, Timer } from 'lucide-react'
+import { Star, AlertTriangle, Calendar, Info, Sparkles, Timer, ArrowRight } from 'lucide-react'
 import BadgeUnlockToast from './BadgeUnlockToast'
 import TimeSlotVisualizer from './TimeSlotVisualizer'
-import { timeToMinutes } from '@/lib/timeValidation'
+import { timeToMinutes, type AvailableSlot, type ConflictInfo } from '@/lib/timeValidation'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Link } from '@/i18n/navigation'
 
 interface OccupiedSlot {
   startTime: string
@@ -30,21 +36,55 @@ interface Props {
   onLoading: (loading: boolean) => void
 }
 
+const CONTEXT_TAGS = [
+  { id: 'low_energy', icon: '🍃' },
+  { id: 'high_energy', icon: '⚡' },
+  { id: 'deep_work', icon: '🧠' },
+  { id: 'meetings', icon: '🤝' },
+  { id: 'creative', icon: '🎨' },
+  { id: 'exercise', icon: '💪' },
+  { id: 'admin', icon: '📁' },
+]
+
 export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const { data: session } = useSession()
   const locale = useLocale()
+  const t = useTranslations()
   const today = new Date()
   const localTodayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split('T')[0]
 
   const [tasks, setTasks] = useState('')
   const [date, setDate] = useState(localTodayStr)
-  
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
-  const [context, setContext] = useState('')
+  const [startTime, setStartTime] = useState('08:00')
+  const [endTime, setEndTime] = useState('17:00')
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [cooldown, setCooldown] = useState(0)
   const [error, setError] = useState('')
+
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current
+    if (textarea) {
+      textarea.style.height = 'auto'
+      textarea.style.height = `${textarea.scrollHeight}px`
+    }
+  }, [tasks])
+
+  // LocalStorage persistence (debounced)
+  useEffect(() => {
+    const saved = localStorage.getItem('dailyplan:draft:tasks')
+    if (saved) setTasks(saved)
+  }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      localStorage.setItem('dailyplan:draft:tasks', tasks)
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [tasks])
 
   // Initialize and reset times based on date
   useEffect(() => {
@@ -62,126 +102,105 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         }
         const timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
         setStartTime(timeStr)
-        // Set end time to 3 hours later or 23:59
-        const endH = Math.min(h + 3, 23)
+        // Set end time to 8 hours later or 23:59
+        const endH = Math.min(h + 8, 23)
         setEndTime(endH >= 23 ? '23:59' : `${endH.toString().padStart(2, '0')}:00`)
       } else {
-        setStartTime('09:00')
-        setEndTime('18:00')
+        setStartTime('08:00')
+        setEndTime('17:00')
       }
     } else {
-      // For future dates, default to 9-6
-      setStartTime('09:00')
-      setEndTime('18:00')
+      setStartTime('08:00')
+      setEndTime('17:00')
     }
   }, [date, localTodayStr])
 
-  // Ensure endTime is at least 30 mins after startTime when manual changes occur
+  // Time validation
   useEffect(() => {
     if (!startTime || !endTime) return
-    const [sh, sm] = startTime.split(':').map(Number)
-    const startMins = sh * 60 + sm
-    const [eh, em] = endTime.split(':').map(Number)
-    const endMins = eh * 60 + em
+    const startMins = timeToMinutes(startTime)
+    const endMins = timeToMinutes(endTime)
     
     if (endMins <= startMins) {
-      const newEnd = Math.min(startMins + 60, 1439) // +1 hour or midnight
+      const newEnd = Math.min(startMins + 60, 1439)
       const h = Math.floor(newEnd / 60)
       const m = newEnd % 60
       setEndTime(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`)
     }
   }, [startTime])
-  const [newBadges, setNewBadges] = useState<Badge[]>([])
 
-  // Time slot conflict state
+  const [newBadges, setNewBadges] = useState<Badge[]>([])
   const [occupiedSlots, setOccupiedSlots] = useState<OccupiedSlot[]>([])
   const [isLoadingSlots, setIsLoadingSlots] = useState(false)
   const [conflicts, setConflicts] = useState<ConflictInfo[]>([])
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([])
   const [showConflictWarning, setShowConflictWarning] = useState(false)
-  const [proposedBlocks, setProposedBlocks] = useState<Block[]>([])
 
-  const t = useTranslations()
-
-  // Fetch occupied time slots when date changes
+  // Fetch occupied time slots
   const fetchOccupiedSlots = useCallback(async () => {
-    if (session?.user) {
-      setIsLoadingSlots(true)
-      try {
-        const res = await fetch(`/api/plan/slots?date=${date}&dayStart=${startTime}&dayEnd=${endTime}`)
+    setIsLoadingSlots(true)
+    try {
+      if (session?.user) {
+        const res = await fetch(`/api/plan/slots?date=${date}`)
         if (res.ok) {
           const data = await res.json()
           setOccupiedSlots(data.occupiedSlots || [])
           setIsLoadingSlots(false)
           return
         }
-      } catch (err) {
-        console.error('Failed to fetch time slots:', err)
       }
-    }
 
-    // Guest fallback: check localStorage for plans on this date
-    const localPlans = Object.keys(localStorage)
-      .filter(k => k.startsWith(`dailyplan:plan:${date}`))
-      .map(k => JSON.parse(localStorage.getItem(k) || '{}'))
-      .filter(p => !p.isArchived)
-    
-    const slots: OccupiedSlot[] = []
-    localPlans.forEach(p => {
-      p.blocks?.forEach((b: any) => {
-        slots.push({
-          startTime: b.startTime,
-          endTime: b.endTime,
-          blockTitle: b.title,
-          blockCategory: b.category
+      // Guest fallback
+      const localPlans = Object.keys(localStorage)
+        .filter(k => k.startsWith(`dailyplan:plan:${date}`))
+        .map(k => JSON.parse(localStorage.getItem(k) || '{}'))
+        .filter(p => !p.isArchived)
+      
+      const slots: OccupiedSlot[] = []
+      localPlans.forEach(p => {
+        p.blocks?.forEach((b: any) => {
+          slots.push({
+            startTime: b.startTime,
+            endTime: b.endTime,
+            blockTitle: b.title,
+            blockCategory: b.category
+          })
         })
       })
-    })
-    setOccupiedSlots(slots)
-    setIsLoadingSlots(false)
-  }, [date, startTime, endTime, session])
+      setOccupiedSlots(slots)
+    } catch (err) {
+      console.error('Failed to fetch time slots:', err)
+    } finally {
+      setIsLoadingSlots(false)
+    }
+  }, [date, session])
 
   useEffect(() => {
     fetchOccupiedSlots()
   }, [fetchOccupiedSlots])
 
-  const handleSubmit = async () => {
-    if (!tasks.trim()) {
+  const toggleTag = (tagId: string) => {
+    setSelectedTags(prev => 
+      prev.includes(tagId) ? prev.filter(id => id !== tagId) : [...prev, tagId]
+    )
+  }
+
+  const handleSubmit = async (resolution?: 'replace') => {
+    if (tasks.trim().length < 3) {
       toast.error(t('braindump.errorNoTasks'))
       return
     }
 
-    if (cooldown > 0) {
-      toast.error(t('braindump.cooldownNote') || 'Please wait before generating again.')
+    if (selectedTags.length === 0) {
+      toast.error(t('braindump.errorNoTags') || 'Please select at least one context tag.')
       return
     }
 
-    if (date === localTodayStr) {
-      const now = new Date()
-      const [h, m] = startTime.split(':').map(Number)
-      
-      const selectedTime = new Date()
-      selectedTime.setHours(h, m, 0, 0)
-
-      const nowTime = now.getTime()
-      const schedTime = selectedTime.getTime()
-      
-      // If start time is in the past OR less than 30 mins from now
-      if (schedTime < nowTime + (29 * 60000)) {
-        toast.error(t('braindump.startTimeErrorToday'))
-        return
-      }
-    }
-
-    // Guest conflict check
-    if (!session?.user && occupiedSlots.length > 0) {
-      // General window check could go here if needed
-    }
-
-    setError('')
     setLoading(true)
     onLoading(true)
     setShowConflictWarning(false)
     setConflicts([])
+    setAvailableSlots([])
 
     try {
       const res = await fetch('/api/plan', {
@@ -191,115 +210,49 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
           tasks, 
           startTime, 
           endTime, 
-          context, 
+          context: selectedTags.join(','), 
           date, 
-          locale
+          locale,
+          resolution
         }),
       })
 
       const data = await res.json()
 
-      // Cooldown only for successful generation or AI-related errors
-      if (res.ok || res.status === 429 || res.status === 503) {
-        setCooldown(10)
-        const timer = setInterval(() => {
-          setCooldown((prev) => {
-            if (prev <= 1) {
-              clearInterval(timer)
-              return 0
-            }
-            return prev - 1
-          })
-        }, 1000)
-      }
-
-      // Handle conflict response (409)
       if (res.status === 409) {
         setConflicts(data.conflicts || [])
+        setAvailableSlots(data.availableSlots || [])
         setShowConflictWarning(true)
         setLoading(false)
         onLoading(false)
-
-        // Show conflict toast with suggestion
-        toast.error(
-          <div>
-            <div style={{ fontWeight: 600, marginBottom: 4 }}>{t('braindump.conflictDetected')}</div>
-            <div style={{ fontSize: 13 }}>{data.suggestion || t('braindump.conflictNote')}</div>
-          </div>,
-          { duration: 8000 }
-        )
+        toast.error(t('braindump.conflictDetected'))
         return
       }
 
       if (!res.ok) {
-        const errorMsg = data.error || (t('common.error') || 'Failed to generate schedule')
-        const lowerError = errorMsg.toLowerCase()
-
-        if (lowerError.includes('401') || lowerError.includes('invalid') || lowerError.includes('unauthorized') || lowerError.includes('unavailable')) {
-          toast.error(t('braindump.errorInvalidKey'))
-        } else if (lowerError.includes('429') || lowerError.includes('too many requests') || lowerError.includes('rate limit') || lowerError.includes('capacity')) {
-          toast.error(t('braindump.errorRateLimit'))
-        } else if (lowerError.includes('moderation') || lowerError.includes('policy') || lowerError.includes('safety') || lowerError.includes('inappropriate')) {
-          toast.error(t('braindump.errorModeration') || 'Content violates safety guidelines.')
-        } else if (lowerError.includes('parse') || lowerError.includes('format') || lowerError.includes('syntax') || lowerError.includes('invalid schedule')) {
-          toast.error(t('braindump.errorInvalidSchedule') || 'Could not create a schedule from these tasks.')
-        } else {
-          toast.error(errorMsg)
-        }
-        throw new Error(errorMsg)
+        throw new Error(data.error || t('common.error'))
       }
 
       const plan: Plan = {
         ...data,
         status: 'draft',
-        blocks: data.blocks.map((b: any, i: number) => ({
+        tasks: data.tasks.map((b: any, i: number) => ({
           ...b,
           id: `block-${Date.now()}-${i}`,
-          completed: false,
+          status: 'todo',
+          xpValue: b.xpValue || 10,
+          order: i,
         })),
       }
 
-      // Final Guest Conflict Check for individual blocks
-      if (!session?.user) {
-        const guestConflicts: ConflictInfo[] = []
-        plan.blocks.forEach(b => {
-          occupiedSlots.forEach(os => {
-            const s1 = timeToMinutes(b.startTime)
-            const e1 = timeToMinutes(b.endTime)
-            const s2 = timeToMinutes(os.startTime)
-            const e2 = timeToMinutes(os.endTime)
-            if (s1 < e2 && s2 < e1) {
-              guestConflicts.push({
-                blockTitle: b.title,
-                blockTime: `${b.startTime}-${b.endTime}`,
-                existingPlanDate: date,
-                existingBlockTitle: os.blockTitle,
-                existingTime: `${os.startTime}-${os.endTime}`
-              })
-            }
-          })
-        })
-
-        if (guestConflicts.length > 0) {
-          setConflicts(guestConflicts)
-          setShowConflictWarning(true)
-          setLoading(false)
-          onLoading(false)
-          toast.error(t('braindump.conflictDetected'))
-          return
-        }
-      }
-
       savePlanLocally(plan)
-
+      if (data.newBadges) setNewBadges(data.newBadges)
+      
       toast.success(t('braindump.successToast'))
       onPlanReady(plan)
 
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : (t('common.error') || 'Something went wrong')
-      if (!message.includes('Invalid API key') && !message.includes('Too many requests') && !message.includes('Time conflict')) {
-        setError(message)
-      }
+    } catch (err: any) {
+      toast.error(err.message)
     } finally {
       setLoading(false)
       onLoading(false)
@@ -309,10 +262,8 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
   const guestCount = typeof window !== 'undefined' ? getGuestPlanCount() : 0
   const showUpsell = !session && guestCount >= 3
 
-  const hasTimeOverlap = occupiedSlots.length > 0
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className="flex flex-col gap-6 fade-up">
       {/* Badge unlock toast */}
       {newBadges.length > 0 && (
         <BadgeUnlockToast
@@ -321,305 +272,207 @@ export default function BrainDump({ onPlanReady, onLoading }: Props) {
         />
       )}
 
-      {/* Guest upsell after 3 plans */}
+      {/* Guest upsell */}
       {showUpsell && (
-        <div style={{
-          padding: '12px 16px', borderRadius: 10,
-          background: 'rgba(124,106,247,0.1)', border: '1px solid rgba(124,106,247,0.3)',
-          display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-        }}>
-          <span style={{ display: 'flex', alignItems: 'center', color: 'var(--accent)' }}><Star size={18} strokeWidth={2.5} /></span>
-          <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>
+        <Card className="bg-primary/10 border-primary/20 p-4 flex items-center gap-4">
+          <Star className="text-primary shrink-0" size={20} />
+          <p className="text-sm flex-1">
             {t('braindump.upsell').replace('{count}', String(guestCount))}
-          </span>
-          <a href="/auth/signup" style={{
-            padding: '6px 14px', borderRadius: 6,
-            background: 'var(--accent)', color: '#fff',
-            textDecoration: 'none', fontSize: 13, fontWeight: 600,
-            fontFamily: 'Syne', whiteSpace: 'nowrap',
-          }}>
-            {t('braindump.signupFree')}
-          </a>
-        </div>
+          </p>
+          <Button asChild size="sm">
+            <Link href="/auth/signup">{t('braindump.signupFree')}</Link>
+          </Button>
+        </Card>
       )}
 
-      {/* Tasks textarea */}
-      <div>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--muted)', marginBottom: 8, fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+      {/* Braindump Textarea */}
+      <div className="space-y-3">
+        <Label className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
           {t('braindump.label')}
-        </label>
+        </Label>
         <textarea
+          ref={textareaRef}
           value={tasks}
           onChange={e => setTasks(e.target.value)}
           placeholder={t('braindump.placeholder')}
-          rows={9}
-          style={{
-            width: '100%', padding: '14px 16px',
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            borderRadius: 10, color: 'var(--text)', fontSize: 14,
-            fontFamily: 'DM Sans', resize: 'vertical', lineHeight: 1.7,
-            outline: 'none', transition: 'border-color 0.15s',
-          }}
-          onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-          onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+          className="w-full min-h-[140px] p-4 bg-muted/50 border border-border rounded-xl text-foreground text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none leading-relaxed"
         />
       </div>
 
-      {/* Time pickers & Date */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'clamp(8px, 2vw, 12px)' }}>
-          <DateInput
-            label={t('history.today')}
+      {/* Date & Time Pickers */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            {t('history.today')}
+          </Label>
+          <Input
+            type="date"
             value={date}
-            onChange={setDate}
             min={localTodayStr}
-            max={new Date(today.getTime() + 30 * 86400000).toISOString().split('T')[0]}
+            onChange={e => setDate(e.target.value)}
+            className="bg-muted/50"
           />
-          <TimeInput label={t('braindump.startTime')} value={startTime} onChange={setStartTime} />
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 'clamp(8px, 2vw, 12px)' }}>
-          <TimeInput label={t('braindump.endTime')} value={endTime} onChange={setEndTime} />
-          {/* Context */}
-          <div>
-            <label style={labelStyle}>{t('braindump.context')}</label>
-            <input
-              type="text"
-              value={context}
-              onChange={e => setContext(e.target.value)}
-              placeholder={t('braindump.contextPlaceholder')}
-              style={inputStyle}
-              onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-              onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-            />
-          </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            {t('braindump.startTime')}
+          </Label>
+          <Input
+            type="time"
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
+            className="bg-muted/50"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            {t('braindump.endTime')}
+          </Label>
+          <Input
+            type="time"
+            value={endTime}
+            onChange={e => setEndTime(e.target.value)}
+            className="bg-muted/50"
+          />
         </div>
       </div>
 
-      {/* Time Slot Visualizer - show when user is authenticated */}
-      {session?.user && (
-        <div style={{
-          padding: 16,
-          background: 'var(--surface)',
-          borderRadius: 12,
-          border: '1px solid var(--border)',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 12,
-          }}>
-            <Calendar size={16} color="var(--muted)" />
-            <span style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--muted)',
-              fontFamily: 'Syne',
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}>
-              {t('braindump.overview')}
-            </span>
-            {isLoadingSlots && (
-              <span style={{
-                fontSize: 11,
-                color: 'var(--accent)',
-                marginLeft: 'auto',
-              }}>
-                {t('common.loading')}
-              </span>
-            )}
-          </div>
-
-          <TimeSlotVisualizer
-            date={date}
-            dayStart={startTime}
-            dayEnd={endTime}
-            occupiedSlots={occupiedSlots}
-            conflicts={conflicts}
-            showAvailableGaps={true}
-          />
-
-          {hasTimeOverlap && (
-            <div style={{
-              marginTop: 12,
-              padding: '10px 14px',
-              background: 'rgba(124, 106, 247, 0.1)',
-              borderRadius: 8,
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 8,
-            }}>
-              <Info size={14} color="var(--accent)" style={{ marginTop: 2, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: 'var(--text)' }}>
-                {t('braindump.occupiedNotice').replace('{count}', String(occupiedSlots.length))}
-              </span>
-            </div>
-          )}
+      {/* Context Tags */}
+      <div className="space-y-3">
+        <Label className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+          {t('braindump.context')}
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {CONTEXT_TAGS.map(tag => (
+            <button
+              key={tag.id}
+              onClick={() => toggleTag(tag.id)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-medium transition-all",
+                selectedTags.includes(tag.id)
+                  ? "bg-primary border-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/50 border-border text-muted-foreground hover:border-primary/50"
+              )}
+            >
+              <span>{tag.icon}</span>
+              {t(`braindump.context_${tag.id}`) || tag.id.replace('_', ' ')}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
+
+      {/* Schedule Overview */}
+      <Card className="bg-muted/30 border-dashed p-4">
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar className="text-muted-foreground" size={14} />
+          <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            {t('braindump.overview')}
+          </span>
+          {isLoadingSlots && <Timer className="animate-spin text-primary ml-auto" size={12} />}
+        </div>
+        
+        <TimeSlotVisualizer
+          date={date}
+          dayStart={startTime}
+          dayEnd={endTime}
+          occupiedSlots={occupiedSlots}
+          showAvailableGaps={true}
+        />
+
+        {occupiedSlots.length > 0 && (
+          <div className="mt-4 flex items-start gap-2 text-[11px] text-muted-foreground bg-primary/5 p-2 rounded-lg border border-primary/10">
+            <Info size={14} className="text-primary shrink-0" />
+            <p>{t('braindump.occupiedNotice').replace('{count}', String(occupiedSlots.length))}</p>
+          </div>
+        )}
+      </Card>
 
       {/* Conflict Warning */}
       {showConflictWarning && conflicts.length > 0 && (
-        <div style={{
-          padding: '14px 16px',
-          background: 'rgba(247, 92, 106, 0.1)',
-          border: '1px solid rgba(247, 92, 106, 0.4)',
-          borderRadius: 10,
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            marginBottom: 10,
-          }}>
-            <AlertTriangle size={18} color="#f75c6a" />
-            <span style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: '#f75c6a',
-              fontFamily: 'Syne',
-            }}>
-              {t('braindump.conflictDetected')}
-            </span>
+        <Card className="bg-destructive/10 border-destructive/20 p-4 space-y-4">
+          <div className="flex items-center gap-2 text-destructive">
+            <AlertTriangle size={18} />
+            <span className="text-sm font-bold font-heading">{t('braindump.conflictDetected')}</span>
           </div>
 
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 8,
-            marginBottom: 12,
-          }}>
+          <div className="space-y-2">
             {conflicts.map((conflict, idx) => (
-              <div key={idx} style={{
-                fontSize: 12,
-                color: 'var(--text)',
-                padding: '8px 12px',
-                background: 'rgba(247, 92, 106, 0.05)',
-                borderRadius: 6,
-              }}>
-                <span style={{ fontWeight: 600 }}>{conflict.blockTitle}</span>
-                <span style={{ color: 'var(--muted)' }}> ({conflict.blockTime})</span>
-                <span style={{ color: '#f75c6a' }}> {locale === 'ar' ? 'يتعارض مع' : locale === 'fr' ? 'en conflit avec' : 'conflicts with'} </span>
-                <span style={{ fontWeight: 600 }}>{conflict.existingBlockTitle}</span>
-                <span style={{ color: 'var(--muted)' }}> ({conflict.existingTime})</span>
+              <div key={idx} className="text-xs bg-destructive/5 p-2 rounded-lg border border-destructive/10">
+                <span className="font-bold text-foreground">{conflict.blockTitle}</span>
+                <span className="text-muted-foreground"> ({conflict.blockTime})</span>
+                <span className="text-destructive mx-1">
+                  {locale === 'ar' ? 'يتعارض مع' : locale === 'fr' ? 'en conflit avec' : 'conflicts with'}
+                </span>
+                <span className="font-bold text-foreground">{conflict.existingBlockTitle}</span>
+                <span className="text-muted-foreground"> ({conflict.existingTime})</span>
               </div>
             ))}
           </div>
 
-          <div style={{
-            fontSize: 12,
-            color: 'var(--muted)',
-            marginBottom: 8,
-          }}>
+          <p className="text-[11px] text-muted-foreground italic">
             {t('braindump.conflictNote')}
-          </div>
-        </div>
-      )}
-
-      {/* General Error */}
-      {error && !showConflictWarning && (
-        <div style={{ padding: '10px 14px', background: 'rgba(247,92,106,0.1)', border: '1px solid rgba(247,92,106,0.3)', borderRadius: 8, color: '#f75c6a', fontSize: 13 }}>
-          {error}
-        </div>
-      )}
-
-      {/* Submit */}
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <button
-          onClick={handleSubmit}
-          disabled={loading || showConflictWarning || cooldown > 0}
-          style={{
-            width: '100%',
-            padding: '14px',
-            background: loading || showConflictWarning || cooldown > 0 ? 'var(--border)' : 'linear-gradient(135deg, var(--accent), #9b8af7)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 12,
-            fontSize: 15,
-            fontWeight: 700,
-            cursor: loading || showConflictWarning || cooldown > 0 ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s',
-            fontFamily: 'Syne',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
-            opacity: loading || showConflictWarning || cooldown > 0 ? 0.7 : 1,
-          }}
-        >
-          {loading ? (
-            <>
-              {t('braindump.generating') || 'Generating...'}
-            </>
-          ) : cooldown > 0 ? (
-            <>
-              <Timer size={18} />
-              {t('braindump.cooldown') || 'COOLDOWN'} ({cooldown}s)
-            </>
-          ) : (
-            <>
-              <Sparkles size={18} />
-              {showConflictWarning ? t('braindump.resolveConflicts') || 'Resolve Conflicts to Continue' : t('braindump.generate')}
-            </>
-          )}
-        </button>
-        {cooldown > 0 && (
-          <p style={{ fontSize: 11, color: 'var(--muted)', textAlign: 'center' }}>
-            {t('braindump.cooldownNote') || 'To prevent rate limits, please wait a few seconds before generating again.'}
           </p>
+
+          <div className="flex flex-col gap-2 pt-2">
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              className="w-full justify-start text-xs h-9"
+              onClick={() => handleSubmit('replace')}
+              disabled={loading}
+            >
+              <AlertTriangle size={14} className="mr-2" />
+              {t('braindump.replaceExisting')}
+            </Button>
+
+            {availableSlots.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t('braindump.adjustToGap')}
+                </p>
+                <div className="grid grid-cols-1 gap-1.5">
+                  {availableSlots.slice(0, 3).map((slot, i) => (
+                    <Button
+                      key={i}
+                      variant="outline"
+                      size="sm"
+                      className="justify-between text-[11px] h-9 border-primary/20 hover:border-primary/50 hover:bg-primary/5"
+                      onClick={() => {
+                        setStartTime(slot.startTime)
+                        setEndTime(slot.endTime)
+                        setShowConflictWarning(false)
+                        setConflicts([])
+                      }}
+                    >
+                      <span className="flex items-center">
+                        <Calendar size={12} className="mr-2 text-primary" />
+                        {slot.startTime} — {slot.endTime}
+                      </span>
+                      <span className="flex items-center text-primary font-bold">
+                        {slot.duration}m <ArrowRight size={12} className="ml-1" />
+                      </span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Submit Button */}
+      <Button 
+        size="lg" 
+        className="w-full h-14 text-base font-bold rounded-xl shadow-lg shadow-primary/20"
+        onClick={handleSubmit}
+        disabled={loading || tasks.length < 3 || selectedTags.length === 0}
+      >
+        {loading ? (
+          <><Timer className="animate-spin mr-2" size={20} /> {t('braindump.generating')}</>
+        ) : (
+          <><Sparkles className="mr-2" size={20} /> {showConflictWarning ? t('braindump.resolveConflicts') : t('braindump.generate')}</>
         )}
-      </div>
+      </Button>
     </div>
   )
-}
-
-function DateInput({ label, value, onChange, min, max }: { label: string; value: string; onChange: (v: string) => void, min: string, max: string }) {
-  return (
-    <div style={{ minWidth: 0 }}>
-      <label style={labelStyle}>{label}</label>
-      <input
-        type="date"
-        value={value}
-        min={min}
-        max={max}
-        onChange={e => onChange(e.target.value)}
-        style={{ ...inputStyle, cursor: 'pointer', paddingRight: 4 }}
-        onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-        onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-      />
-    </div>
-  )
-}
-
-function TimeInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  return (
-    <div style={{ minWidth: 0 }}>
-      <label style={labelStyle}>{label}</label>
-      <input
-        type="time"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        style={{ ...inputStyle, cursor: 'pointer', paddingRight: 4 }}
-        onFocus={e => (e.currentTarget.style.borderColor = 'var(--accent)')}
-        onBlur={e => (e.currentTarget.style.borderColor = 'var(--border)')}
-      />
-    </div>
-  )
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 12, fontWeight: 600,
-  color: 'var(--muted)', marginBottom: 6,
-  fontFamily: 'Syne', textTransform: 'uppercase', letterSpacing: '0.06em',
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: 'clamp(10px, 2.5vw, 12px) 14px',
-  background: 'var(--surface)', border: '1px solid var(--border)',
-  borderRadius: 10, color: 'var(--text)', fontSize: 'clamp(13px, 3vw, 14px)',
-  fontFamily: 'DM Sans', outline: 'none',
-  transition: 'border-color 0.15s',
-  colorScheme: 'dark',
-  minHeight: 'clamp(44px, 10vw, 48px)',
 }
