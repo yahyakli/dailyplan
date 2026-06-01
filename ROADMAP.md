@@ -75,10 +75,10 @@ All work will be conducted in the `remake` parent branch, with feature-specific 
 ### Sprint 4: Secondary Pages & Polish
 **Goal:** Complete the user journey and finalize the application.
 
-- [ ] **Task 4.1: History & Plan Management (`remake/history-page`)**
+- [x] **Task 4.1: History & Plan Management (`remake/history-page`)**
   - Implement cursor-based pagination for history.
   - Create the plan detail drawer and "Recreate Plan" CTA.
-- [ ] **Task 4.2: Settings & Profile (`remake/settings-page`)**
+- [x] **Task 4.2: Settings & Profile (`remake/settings-page`)**
   - Build the account management forms (avatar, display name).
   - Implement preference toggles (theme, language, default times).
 - [ ] **Task 4.3: Guest Mode & Migration (`remake/guest-mode`)**

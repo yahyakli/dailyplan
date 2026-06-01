@@ -1,10 +1,9 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
-import { getRecentPlans } from '@/lib/storage'
 import type { Plan } from '@/lib/types'
-import ScheduleView from '@/components/ScheduleView'
 import HistoryCard from '@/components/HistoryCard'
+import PlanDetailDrawer from '@/components/PlanDetailDrawer'
 import { useTranslations } from 'next-intl'
 import { CalendarDays } from 'lucide-react'
 
@@ -12,23 +11,45 @@ export default function HistoryPage() {
   const { data: session } = useSession()
   const [plans, setPlans] = useState<Plan[]>([])
   const [selected, setSelected] = useState<Plan | null>(null)
+  const [cursor, setCursor] = useState<string | null>(null)
+  const [hasMore, setHasMore] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const observerRef = useRef<HTMLDivElement>(null)
   const t = useTranslations()
 
-  useEffect(() => {
-    const local = getRecentPlans(7)
-    setPlans(local)
-  }, [])
+  const fetchPlans = useCallback(async (reset = false) => {
+    if (loading || (!hasMore && !reset)) return
+    setLoading(true)
+    try {
+      const url = `/api/history?limit=10${cursor && !reset ? `&cursor=${cursor}` : ''}`
+      const res = await fetch(url)
+      const data = await res.json()
 
-  if (selected) {
-    return (
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
-        <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', fontSize: 13, marginBottom: 24, padding: 0 }}>
-          {t('history.backToHistory')}
-        </button>
-        <ScheduleView plan={selected} />
-      </div>
-    )
-  }
+      setPlans(prev => reset ? data.items : [...prev, ...data.items])
+      setCursor(data.nextCursor)
+      setHasMore(!!data.nextCursor)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }, [cursor, hasMore, loading])
+
+  useEffect(() => {
+    fetchPlans(true)
+  }, []) // Initial fetch
+
+  // Infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore && !loading) {
+        fetchPlans()
+      }
+    }, { threshold: 1.0 })
+
+    if (observerRef.current) observer.observe(observerRef.current)
+    return () => observer.disconnect()
+  }, [hasMore, loading, fetchPlans])
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: 'clamp(24px, 5vw, 40px)' }} className="px-4 sm:px-6">
@@ -45,7 +66,7 @@ export default function HistoryPage() {
           </div>
         )}
 
-        {plans.length === 0 ? (
+        {plans.length === 0 && !loading ? (
           <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--muted)' }}>
             <CalendarDays size={48} strokeWidth={1} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
             <p style={{ fontSize: 15 }}>{t('history.empty')} <a href="/" style={{ color: 'var(--accent)' }}>{t('history.createFirst')}</a></p>
@@ -54,15 +75,18 @@ export default function HistoryPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {plans.map((plan, i) => (
               <HistoryCard
-                key={plan._id || plan.createdAt || `${plan.date}-${i}`}
+                key={plan._id || i}
                 plan={plan}
                 index={i}
                 onClick={() => setSelected(plan)}
               />
             ))}
+            <div ref={observerRef} className="h-4" />
           </div>
         )}
       </div>
+
+      {selected && <PlanDetailDrawer plan={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }
